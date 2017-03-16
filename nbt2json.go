@@ -1,25 +1,26 @@
 package nbt2json
 
 import (
+	"bytes"
+	"encoding/binary"
 	"encoding/json"
 )
 
-// Nbt2Json represents one NBT tag for each struct
-type Nbt2Json struct {
+// NbtTag represents one NBT tag for each struct
+type NbtTag struct {
 	TagType byte   `json:"tagType"`
 	Name    string `json:"name"`
-	Value   *json.RawMessage
+	Value   interface{}
 }
 
-func NewNbt2Json() *Nbt2Json {
-	return &Nbt2Json{TagType: 0, Name: "Hi this isn't valid"}
-}
-
-func Json2Nbt(s string) (interface{}, error) {
-	var temp interface{}
-	err := json.Unmarshal([]byte(s), &temp)
+// Nbt2Json ...
+func Nbt2Json(b []byte, byteOrder binary.ByteOrder) ([]byte, error) {
+	var data NbtTag
+	buf := bytes.NewReader(b[:])
+	err := binary.Read(buf, binary.LittleEndian, &data.TagType)
 	if err != nil {
 		return nil, err
 	}
-	return temp, nil
+	outJson, err := json.Marshal(data)
+	return outJson, nil
 }

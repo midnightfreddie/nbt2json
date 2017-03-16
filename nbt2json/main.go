@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"encoding/json"
+	"encoding/binary"
 
 	"github.com/midnightfreddie/nbt2json"
 	"github.com/urfave/cli"
@@ -12,15 +12,25 @@ import (
 
 func main() {
 	var nbtFile, jsonFile string
+	var byteOrder binary.ByteOrder
 	app := cli.NewApp()
 	app.Name = "NBT to JSON"
 	app.Version = "0.0.0"
 	app.Usage = "UNDER DEVELOPMENT, MOST OR ALL OPTIONS NOT IMPLEMENTED - Converts NBT-encoded data to JSON"
 	app.Flags = []cli.Flag{
+		// cli.BoolFlag{
+		// 	Name:  "reverse, json2nbt, r",
+		// 	Usage: "Convert JSON to NBT instead",
+		// },
+		cli.BoolTFlag{
+			Name:  "little-endian, little, mcpe, l",
+			Usage: "Number format for Minecraft Pocket Edition and Windows 10 Edition",
+		},
 		cli.BoolFlag{
-			Name:  "reverse, json2nbt, r",
-			Usage: "Convert JSON to NBT instead",
-		}, cli.StringFlag{
+			Name:  "big-endian, big, java, pc, b",
+			Usage: "Number format for Minecraft Pocket Edition and Windows 10 Edition",
+		},
+		cli.StringFlag{
 			Name:        "nbt-file, n",
 			Value:       "-",
 			Usage:       "NBT `FILE` path",
@@ -34,19 +44,18 @@ func main() {
 		},
 	}
 	app.Action = func(c *cli.Context) error {
-		anObject := nbt2json.NewNbt2Json()
-		fmt.Printf("%v\n", anObject)
-		out, err := json.Marshal(anObject)
+		if c.String("big-endian") == "true" {
+			byteOrder = binary.BigEndian
+		} else {
+			byteOrder = binary.LittleEndian
+		}
+		myNbt := []byte{2, 2, 0, 'h', 'i', 0, 1}
+		out, err := nbt2json.Nbt2Json(myNbt, byteOrder)
 		if err != nil {
 			return err
 		}
+		// fmt.Printf("%v\n", out)
 		fmt.Println(string(out[:]))
-		myString := "{ \"type\": 0, \"value\": \"Hi\"}"
-		out2, err := nbt2json.Json2Nbt(myString)
-		if err != nil {
-			return err
-		}
-		fmt.Printf("%v\n", out2)
 		return nil
 	}
 
