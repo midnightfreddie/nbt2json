@@ -64,7 +64,6 @@ func Nbt2Json(r *bytes.Reader, byteOrder binary.ByteOrder) ([]byte, error) {
 		if err != nil {
 			return nil, NbtParseError{"Reading Name length", err}
 		}
-		fmt.Println(nameLen)
 		name := make([]byte, nameLen)
 		err = binary.Read(r, byteOrder, &name)
 		if err != nil {
@@ -97,7 +96,7 @@ func Nbt2Json(r *bytes.Reader, byteOrder binary.ByteOrder) ([]byte, error) {
 		}
 	case 10:
 		// compound is currently broken by design as its recursiveness is returning JSON instead of data, but might be able to use raw json data type? Else rework data types for recursiveness
-		var compound []byte
+		var compound []json.RawMessage
 		var tagtype int64
 		for tagtype, err = readInt(r, 1, byteOrder); tagtype != 0; tagtype, err = readInt(r, 1, byteOrder) {
 			if err != nil {
@@ -111,9 +110,15 @@ func Nbt2Json(r *bytes.Reader, byteOrder binary.ByteOrder) ([]byte, error) {
 			if err != nil {
 				return nil, NbtParseError{"compound: reading a child tag", err}
 			}
-			compound = append(compound, tag...)
-			data.Value = string(compound[:])
+			compound = append(compound, json.RawMessage(string(tag)))
 		}
+		// var boo *json.RawMessage
+		// boo = &compound
+		// fmt.Printf("%v\n", boo)
+		// data.Value = string(compound[:])
+		// data.Value = json.RawMessage(string(compound[:]))
+		// data.Value = boo
+		data.Value = compound
 	default:
 		return nil, NbtParseError{"TagType not recognized", nil}
 	}
