@@ -14,6 +14,12 @@ type NbtTag struct {
 	Value   interface{} `json:"value,omitempty"`
 }
 
+// NbtTagList represents an NBT tag list
+type NbtTagList struct {
+	TagListType byte          `json:"tagType"`
+	List        []interface{} `json:"list"`
+}
+
 // NbtParseError is when the data does not match an expected pattern. Pass it message string and downstream error
 type NbtParseError struct {
 	s string
@@ -80,6 +86,7 @@ func Nbt2Json(r *bytes.Reader, byteOrder binary.ByteOrder) ([]byte, error) {
 	return outJson, nil
 }
 
+// Gets the tag payload. Had to break this out from the main function to allow tag list recursion
 func getPayload(r *bytes.Reader, byteOrder binary.ByteOrder, tagType byte) (interface{}, error) {
 	var output interface{}
 	var err error
@@ -138,7 +145,37 @@ func getPayload(r *bytes.Reader, byteOrder binary.ByteOrder, tagType byte) (inte
 			byteArray = append(byteArray, oneByte)
 		}
 		output = byteArray
-
+	case 8:
+		// needs testing
+		strLen, err := readInt(r, 2, byteOrder)
+		if err != nil {
+			return nil, NbtParseError{"Reading string tag length", err}
+		}
+		utf8String := make([]byte, strLen)
+		err = binary.Read(r, byteOrder, &utf8String)
+		if err != nil {
+			return nil, NbtParseError{"Reading string tag data", err}
+		}
+		output = string(utf8String[:])
+	case 9:
+		// needs testing
+		var tagList NbtTagList
+		err = binary.Read(r, byteOrder, &tagList.TagListType)
+		if err != nil {
+			return nil, NbtParseError{"Reading TagType", err}
+		}
+		numRecords, err := readInt(r, 4, byteOrder)
+		if err != nil {
+			return nil, NbtParseError{"Reading list tag length", err}
+		}
+		for i := int64(1); i <= numRecords; i++ {
+			payload, err := getPayload(r, byteOrder, tagList.TagListType)
+			if err != nil {
+				return nil, NbtParseError{"Reading list tag item", err}
+			}
+			tagList.List = append(tagList.List, payload)
+		}
+		output = tagList
 	case 10:
 		var compound []json.RawMessage
 		var tagtype int64
@@ -157,6 +194,22 @@ func getPayload(r *bytes.Reader, byteOrder binary.ByteOrder, tagType byte) (inte
 			compound = append(compound, json.RawMessage(string(tag)))
 		}
 		output = compound
+	case 11:
+		// needs testing
+		var intArray []int32
+		var oneInt int32
+		numRecords, err := readInt(r, 4, byteOrder)
+		if err != nil {
+			return nil, NbtParseError{"Reading int array tag length", err}
+		}
+		for i := int64(1); i <= numRecords; i++ {
+			err := binary.Read(r, byteOrder, &oneInt)
+			if err != nil {
+				return nil, NbtParseError{"Reading int in int array tag", err}
+			}
+			intArray = append(intArray, oneInt)
+		}
+		output = intArray
 	default:
 		return nil, NbtParseError{"TagType not recognized", nil}
 	}
