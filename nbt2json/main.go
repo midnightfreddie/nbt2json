@@ -1,14 +1,14 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
+	"io/ioutil"
 	"os"
 
 	"encoding/binary"
 
-	"bytes"
-
-	"io/ioutil"
+	"compress/gzip"
 
 	"github.com/midnightfreddie/nbt2json"
 	"github.com/urfave/cli"
@@ -17,6 +17,7 @@ import (
 func main() {
 	var nbtFile, jsonFile string
 	var byteOrder binary.ByteOrder
+	var skipBytes int
 	app := cli.NewApp()
 	app.Name = "NBT to JSON"
 	app.Version = "0.0.0"
@@ -46,6 +47,12 @@ func main() {
 			Usage:       "JSON `FILE` path",
 			Destination: &jsonFile,
 		},
+		cli.IntFlag{
+			Name:        "skip",
+			Value:       0,
+			Usage:       "Skip `NUM` bytes of NBT input. For MCPE level.dat, use --skip 8 to bypass header",
+			Destination: &skipBytes,
+		},
 	}
 	app.Action = func(c *cli.Context) error {
 		if c.String("big-endian") == "true" {
@@ -54,51 +61,39 @@ func main() {
 			byteOrder = binary.LittleEndian
 		}
 
-		myNbt := []byte{2, 2, 0, 'h', 'i', 0, 1}
-		buf := bytes.NewReader(myNbt)
+		var myNbt []byte
+		var err error
+
+		if c.String("nbt-file") == "-" {
+			myNbt, err = ioutil.ReadAll(os.Stdin)
+			if err != nil {
+				return err
+			}
+		} else {
+			f, err := os.Open(c.String("nbt-file"))
+			if err != nil {
+				return err
+			}
+			defer f.Close()
+			myNbt, err = ioutil.ReadAll(f)
+			if err != nil {
+				return err
+			}
+		}
+
+		// is it gzipped?
+		if (myNbt[0] == 0x1f) && (myNbt[1] == 0x8b) {
+			var uncompressed []byte
+			buf := bytes.NewReader(myNbt)
+			zr, err := gzip.NewReader(buf)
+			if err != nil {
+				return err
+			}
+			uncompressed, err = ioutil.ReadAll(zr)
+			myNbt = uncompressed
+		}
+		buf := bytes.NewReader(myNbt[skipBytes:])
 		out, err := nbt2json.Nbt2Json(buf, byteOrder)
-		if err != nil {
-			return err
-		}
-		fmt.Println(string(out[:]))
-
-		myNbt = []byte{2, 0, 3, 'b', 'i', 'g', 0, 1}
-		buf = bytes.NewReader(myNbt)
-		out, err = nbt2json.Nbt2Json(buf, binary.BigEndian)
-		if err != nil {
-			return err
-		}
-		fmt.Println(string(out[:]))
-
-		myNbt = []byte{1, 2, 0, 'h', 'i', 1}
-		buf = bytes.NewReader(myNbt)
-		out, err = nbt2json.Nbt2Json(buf, byteOrder)
-		if err != nil {
-			return err
-		}
-		fmt.Println(string(out[:]))
-
-		myNbt = []byte{10, 0, 0, 1, 2, 0, 'h', 'i', 1, 0}
-		buf = bytes.NewReader(myNbt)
-		out, err = nbt2json.Nbt2Json(buf, byteOrder)
-		if err != nil {
-			return err
-		}
-		fmt.Println(string(out[:]))
-		myNbt = []byte{10, 0, 0, 1, 2, 0, 'h', 'i', 1, 1, 2, 0, 'h', 'o', 2, 0}
-		buf = bytes.NewReader(myNbt)
-		out, err = nbt2json.Nbt2Json(buf, byteOrder)
-		if err != nil {
-			return err
-		}
-		fmt.Println(string(out[:]))
-
-		myNbt, err = ioutil.ReadFile(`c:\temp\nbttest.bin`)
-		if err != nil {
-			return err
-		}
-		buf = bytes.NewReader(myNbt)
-		out, err = nbt2json.Nbt2Json(buf, byteOrder)
 		if err != nil {
 			return err
 		}
