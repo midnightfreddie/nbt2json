@@ -17,10 +17,15 @@ type NbtTag struct {
 // NbtParseError is when the data does not match an expected pattern. Pass it message string and downstream error
 type NbtParseError struct {
 	s string
+	e error
 }
 
 func (e NbtParseError) Error() string {
-	return fmt.Sprintf("Error parsing NBT: %s", e.s)
+	var s string
+	if e.e != nil {
+		s = fmt.Sprintf(": %s", e.e.Error())
+	}
+	return fmt.Sprintf("Error parsing NBT: %s%s", e.s, s)
 }
 
 // Nbt2Json ...
@@ -29,19 +34,19 @@ func Nbt2Json(b []byte, byteOrder binary.ByteOrder) ([]byte, error) {
 	buf := bytes.NewReader(b[:])
 	err := binary.Read(buf, byteOrder, &data.TagType)
 	if err != nil {
-		return nil, NbtParseError{fmt.Sprintf("Reading TagType: %s", err.Error())}
+		return nil, NbtParseError{"Reading TagType", err}
 	}
 	if data.TagType != 0 {
 		var err error
 		var nameLen int16
 		err = binary.Read(buf, byteOrder, &nameLen)
 		if err != nil {
-			return nil, NbtParseError{fmt.Sprintf("Reading Name length: %s", err.Error())}
+			return nil, NbtParseError{"Reading Name length", err}
 		}
 		name := make([]byte, nameLen)
 		err = binary.Read(buf, byteOrder, &name)
 		if err != nil {
-			return nil, NbtParseError{fmt.Sprintf("Reading Name: %s", err.Error())}
+			return nil, NbtParseError{"Reading Name - is little/big endian byte order set correctly?", err}
 		}
 		data.Name = string(name[:])
 	}
@@ -51,7 +56,7 @@ func Nbt2Json(b []byte, byteOrder binary.ByteOrder) ([]byte, error) {
 	case 2:
 		data.Value = "test"
 	default:
-		return nil, NbtParseError{"TagType not recognized"}
+		return nil, NbtParseError{"TagType not recognized", nil}
 	}
 	outJson, err := json.Marshal(data)
 	return outJson, nil
