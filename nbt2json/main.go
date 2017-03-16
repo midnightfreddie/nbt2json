@@ -92,8 +92,7 @@ func main() {
 			uncompressed, err = ioutil.ReadAll(zr)
 			myNbt = uncompressed
 		}
-		buf := bytes.NewReader(myNbt[skipBytes:])
-		out, err := nbt2json.Nbt2Json(buf, byteOrder)
+		out, err := nbt2json.Nbt2Json(myNbt[skipBytes:], byteOrder)
 		if err != nil {
 			return err
 		}

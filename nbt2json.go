@@ -34,6 +34,16 @@ func (e NbtParseError) Error() string {
 	return fmt.Sprintf("Error parsing NBT: %s%s", e.s, s)
 }
 
+// Nbt2Json converts uncompressed NBT byte array to JSON byte array
+func Nbt2Json(b []byte, byteOrder binary.ByteOrder) ([]byte, error) {
+	buf := bytes.NewReader(b)
+	jsonOut, err := getTag(buf, byteOrder)
+	if err != nil {
+		return nil, err
+	}
+	return jsonOut, nil
+}
+
 // Reads 0-8 bytes and returns an int64 value
 func readInt(r *bytes.Reader, numBytes int, byteOrder binary.ByteOrder) (i int64, err error) {
 	var myInt64 []byte
@@ -56,8 +66,8 @@ func readInt(r *bytes.Reader, numBytes int, byteOrder binary.ByteOrder) (i int64
 	return i, err
 }
 
-// Nbt2Json ...
-func Nbt2Json(r *bytes.Reader, byteOrder binary.ByteOrder) ([]byte, error) {
+// getTag broken out form Nbt2Json to allow recursion with reader but public input is []byte
+func getTag(r *bytes.Reader, byteOrder binary.ByteOrder) ([]byte, error) {
 	var data NbtTag
 	err := binary.Read(r, byteOrder, &data.TagType)
 	if err != nil {
@@ -182,7 +192,7 @@ func getPayload(r *bytes.Reader, byteOrder binary.ByteOrder, tagType byte) (inte
 			if err != nil {
 				return nil, NbtParseError{"seeking back one", err}
 			}
-			tag, err := Nbt2Json(r, byteOrder)
+			tag, err := getTag(r, byteOrder)
 			if err != nil {
 				return nil, NbtParseError{"compound: reading a child tag", err}
 			}

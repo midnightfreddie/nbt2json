@@ -22,6 +22,5 @@ There are some Go options I could adapt for little endian, but I'll have to do e
 
 ## Dev notes
 
-- I'm going to change the interface of `nbt2json.Nbt2Json` to use `[]byte` as input instead of a reader.
 - The upcoming Json2Nbt function will not use the same struct; it will use an `interface{}` and encode based on the tagType fields. I had originally hoped to Marshal and Unmarshal to and from JSON and NBT, but my goal was to export to JSON, edit and then reencode. This way the struct doesn't have to match the data schema.
 - My main motivation for this project is to convert to/from JSON and use any JSON editor to modify Minecraft PE data with [McpeTool](https://github.com/midnightfreddie/McpeTool), and to keep the read/write primitives in Go code while letting a client browser manage any validation to avoid having to re-release the read/write tools every time Minecraft changes formats.
