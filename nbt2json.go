@@ -51,22 +51,22 @@ func readInt(r *bytes.Reader, numBytes int, byteOrder binary.ByteOrder) (i int64
 }
 
 // Nbt2Json ...
-func Nbt2Json(b []byte, byteOrder binary.ByteOrder) ([]byte, error) {
+func Nbt2Json(r *bytes.Reader, byteOrder binary.ByteOrder) ([]byte, error) {
 	var data NbtTag
-	buf := bytes.NewReader(b[:])
-	err := binary.Read(buf, byteOrder, &data.TagType)
+	err := binary.Read(r, byteOrder, &data.TagType)
 	if err != nil {
 		return nil, NbtParseError{"Reading TagType", err}
 	}
 	if data.TagType != 0 {
 		var err error
 		var nameLen int64
-		nameLen, err = readInt(buf, 2, byteOrder)
+		nameLen, err = readInt(r, 2, byteOrder)
 		if err != nil {
 			return nil, NbtParseError{"Reading Name length", err}
 		}
+		fmt.Println(nameLen)
 		name := make([]byte, nameLen)
-		err = binary.Read(buf, byteOrder, &name)
+		err = binary.Read(r, byteOrder, &name)
 		if err != nil {
 			return nil, NbtParseError{"Reading Name - is little/big endian byte order set correctly?", err}
 		}
@@ -76,24 +76,43 @@ func Nbt2Json(b []byte, byteOrder binary.ByteOrder) ([]byte, error) {
 	case 0:
 		// end tag; do nothing further
 	case 1:
-		data.Value, err = readInt(buf, 1, byteOrder)
+		data.Value, err = readInt(r, 1, byteOrder)
 		if err != nil {
 			return nil, NbtParseError{"Reading int8", err}
 		}
 	case 2:
-		data.Value, err = readInt(buf, 2, byteOrder)
+		data.Value, err = readInt(r, 2, byteOrder)
 		if err != nil {
 			return nil, NbtParseError{"Reading int16", err}
 		}
 	case 3:
-		data.Value, err = readInt(buf, 4, byteOrder)
+		data.Value, err = readInt(r, 4, byteOrder)
 		if err != nil {
 			return nil, NbtParseError{"Reading int32", err}
 		}
 	case 4:
-		data.Value, err = readInt(buf, 8, byteOrder)
+		data.Value, err = readInt(r, 8, byteOrder)
 		if err != nil {
 			return nil, NbtParseError{"Reading int64", err}
+		}
+	case 10:
+		// compound is currently broken by design as its recursiveness is returning JSON instead of data, but might be able to use raw json data type? Else rework data types for recursiveness
+		var compound []byte
+		var tagtype int64
+		for tagtype, err = readInt(r, 1, byteOrder); tagtype != 0; tagtype, err = readInt(r, 1, byteOrder) {
+			if err != nil {
+				return nil, NbtParseError{"compound: reading next tag type", err}
+			}
+			_, err = r.Seek(-1, 1)
+			if err != nil {
+				return nil, NbtParseError{"seeking back one", err}
+			}
+			tag, err := Nbt2Json(r, byteOrder)
+			if err != nil {
+				return nil, NbtParseError{"compound: reading a child tag", err}
+			}
+			compound = append(compound, tag...)
+			data.Value = string(compound[:])
 		}
 	default:
 		return nil, NbtParseError{"TagType not recognized", nil}

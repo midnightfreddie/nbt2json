@@ -6,6 +6,8 @@ import (
 
 	"encoding/binary"
 
+	"bytes"
+
 	"github.com/midnightfreddie/nbt2json"
 	"github.com/urfave/cli"
 )
@@ -49,13 +51,39 @@ func main() {
 		} else {
 			byteOrder = binary.LittleEndian
 		}
+
 		myNbt := []byte{2, 2, 0, 'h', 'i', 0, 1}
-		out, err := nbt2json.Nbt2Json(myNbt, byteOrder)
+		buf := bytes.NewReader(myNbt)
+		out, err := nbt2json.Nbt2Json(buf, byteOrder)
 		if err != nil {
 			return err
 		}
-		// fmt.Printf("%v\n", out)
 		fmt.Println(string(out[:]))
+
+		myNbt = []byte{2, 0, 3, 'b', 'i', 'g', 0, 1}
+		buf = bytes.NewReader(myNbt)
+		out, err = nbt2json.Nbt2Json(buf, binary.BigEndian)
+		if err != nil {
+			return err
+		}
+		fmt.Println(string(out[:]))
+
+		myNbt = []byte{1, 2, 0, 'h', 'i', 1}
+		buf = bytes.NewReader(myNbt)
+		out, err = nbt2json.Nbt2Json(buf, byteOrder)
+		if err != nil {
+			return err
+		}
+		fmt.Println(string(out[:]))
+
+		myNbt = []byte{10, 0, 0, 1, 2, 0, 'h', 'i', 1, 1, 2, 0, 'h', 'i', 1, 0}
+		buf = bytes.NewReader(myNbt)
+		out, err = nbt2json.Nbt2Json(buf, byteOrder)
+		if err != nil {
+			return err
+		}
+		fmt.Println(string(out[:]))
+
 		return nil
 	}
 
