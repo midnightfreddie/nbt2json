@@ -47,7 +47,7 @@ func readInt(r *bytes.Reader, numBytes int, byteOrder binary.ByteOrder) (i int64
 	}
 	buf := bytes.NewReader(myInt64)
 	err = binary.Read(buf, byteOrder, &i)
-	return i, nil
+	return i, err
 }
 
 // Nbt2Json ...
