@@ -95,6 +95,39 @@ func Nbt2Json(r *bytes.Reader, byteOrder binary.ByteOrder) ([]byte, error) {
 		if err != nil {
 			return nil, NbtParseError{"Reading int64", err}
 		}
+	case 5:
+		// needs testing
+		var f float32
+		err = binary.Read(r, byteOrder, &f)
+		if err != nil {
+			return nil, NbtParseError{"Reading float32", err}
+		}
+		data.Value = f
+	case 6:
+		// needs testing
+		var f float64
+		err = binary.Read(r, byteOrder, &f)
+		if err != nil {
+			return nil, NbtParseError{"Reading float64", err}
+		}
+		data.Value = f
+	case 7:
+		// needs testing
+		var byteArray []byte
+		var oneByte byte
+		numRecords, err := readInt(r, 4, byteOrder)
+		if err != nil {
+			return nil, NbtParseError{"Reading byte array tag length", err}
+		}
+		for i := int64(1); i <= numRecords; i++ {
+			err := binary.Read(r, byteOrder, &oneByte)
+			if err != nil {
+				return nil, NbtParseError{"Reading byte in byte array tag", err}
+			}
+			byteArray = append(byteArray, oneByte)
+		}
+		data.Value = byteArray
+
 	case 10:
 		var compound []json.RawMessage
 		var tagtype int64
