@@ -28,6 +28,28 @@ func (e NbtParseError) Error() string {
 	return fmt.Sprintf("Error parsing NBT: %s%s", e.s, s)
 }
 
+// Reads 0-8 bytes and returns an int64 value
+func readInt(r *bytes.Reader, numBytes int, byteOrder binary.ByteOrder) (i int64, err error) {
+	var myInt64 []byte
+	temp := make([]byte, numBytes)
+	err = binary.Read(r, byteOrder, &temp)
+	if err != nil {
+		return i, NbtParseError{fmt.Sprintf("Reading %v bytes for intxx", numBytes), err}
+	}
+	padding := make([]byte, 8-numBytes)
+	if byteOrder == binary.BigEndian {
+		myInt64 = append(padding, temp...)
+	} else if byteOrder == binary.LittleEndian {
+		myInt64 = append(temp, padding...)
+	} else {
+		_ = myInt64
+		return i, NbtParseError{"byteOrder not recognized", nil}
+	}
+	buf := bytes.NewReader(myInt64)
+	err = binary.Read(buf, byteOrder, &i)
+	return i, nil
+}
+
 // Nbt2Json ...
 func Nbt2Json(b []byte, byteOrder binary.ByteOrder) ([]byte, error) {
 	var data NbtTag
@@ -54,7 +76,7 @@ func Nbt2Json(b []byte, byteOrder binary.ByteOrder) ([]byte, error) {
 	case 0:
 		// end tag; do nothing further
 	case 2:
-		data.Value = "test"
+		data.Value, err = readInt(buf, 2, byteOrder)
 	default:
 		return nil, NbtParseError{"TagType not recognized", nil}
 	}
