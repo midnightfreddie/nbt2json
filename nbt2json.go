@@ -72,26 +72,37 @@ func Nbt2Json(r *bytes.Reader, byteOrder binary.ByteOrder) ([]byte, error) {
 		}
 		data.Name = string(name[:])
 	}
-	switch data.TagType {
+	data.Value, err = getPayload(r, byteOrder, data.TagType)
+	if err != nil {
+		return nil, err
+	}
+	outJson, err := json.Marshal(data)
+	return outJson, nil
+}
+
+func getPayload(r *bytes.Reader, byteOrder binary.ByteOrder, tagType byte) (interface{}, error) {
+	var output interface{}
+	var err error
+	switch tagType {
 	case 0:
 		// end tag for compound; do nothing further
 	case 1:
-		data.Value, err = readInt(r, 1, byteOrder)
+		output, err = readInt(r, 1, byteOrder)
 		if err != nil {
 			return nil, NbtParseError{"Reading int8", err}
 		}
 	case 2:
-		data.Value, err = readInt(r, 2, byteOrder)
+		output, err = readInt(r, 2, byteOrder)
 		if err != nil {
 			return nil, NbtParseError{"Reading int16", err}
 		}
 	case 3:
-		data.Value, err = readInt(r, 4, byteOrder)
+		output, err = readInt(r, 4, byteOrder)
 		if err != nil {
 			return nil, NbtParseError{"Reading int32", err}
 		}
 	case 4:
-		data.Value, err = readInt(r, 8, byteOrder)
+		output, err = readInt(r, 8, byteOrder)
 		if err != nil {
 			return nil, NbtParseError{"Reading int64", err}
 		}
@@ -102,7 +113,7 @@ func Nbt2Json(r *bytes.Reader, byteOrder binary.ByteOrder) ([]byte, error) {
 		if err != nil {
 			return nil, NbtParseError{"Reading float32", err}
 		}
-		data.Value = f
+		output = f
 	case 6:
 		// needs testing
 		var f float64
@@ -110,7 +121,7 @@ func Nbt2Json(r *bytes.Reader, byteOrder binary.ByteOrder) ([]byte, error) {
 		if err != nil {
 			return nil, NbtParseError{"Reading float64", err}
 		}
-		data.Value = f
+		output = f
 	case 7:
 		// needs testing
 		var byteArray []byte
@@ -126,7 +137,7 @@ func Nbt2Json(r *bytes.Reader, byteOrder binary.ByteOrder) ([]byte, error) {
 			}
 			byteArray = append(byteArray, oneByte)
 		}
-		data.Value = byteArray
+		output = byteArray
 
 	case 10:
 		var compound []json.RawMessage
@@ -145,10 +156,9 @@ func Nbt2Json(r *bytes.Reader, byteOrder binary.ByteOrder) ([]byte, error) {
 			}
 			compound = append(compound, json.RawMessage(string(tag)))
 		}
-		data.Value = compound
+		output = compound
 	default:
 		return nil, NbtParseError{"TagType not recognized", nil}
 	}
-	outJson, err := json.Marshal(data)
-	return outJson, nil
+	return output, nil
 }
