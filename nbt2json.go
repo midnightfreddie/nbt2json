@@ -60,8 +60,8 @@ func Nbt2Json(b []byte, byteOrder binary.ByteOrder) ([]byte, error) {
 	}
 	if data.TagType != 0 {
 		var err error
-		var nameLen int16
-		err = binary.Read(buf, byteOrder, &nameLen)
+		var nameLen int64
+		nameLen, err = readInt(buf, 2, byteOrder)
 		if err != nil {
 			return nil, NbtParseError{"Reading Name length", err}
 		}
@@ -75,8 +75,26 @@ func Nbt2Json(b []byte, byteOrder binary.ByteOrder) ([]byte, error) {
 	switch data.TagType {
 	case 0:
 		// end tag; do nothing further
+	case 1:
+		data.Value, err = readInt(buf, 1, byteOrder)
+		if err != nil {
+			return nil, NbtParseError{"Reading int8", err}
+		}
 	case 2:
 		data.Value, err = readInt(buf, 2, byteOrder)
+		if err != nil {
+			return nil, NbtParseError{"Reading int16", err}
+		}
+	case 3:
+		data.Value, err = readInt(buf, 4, byteOrder)
+		if err != nil {
+			return nil, NbtParseError{"Reading int32", err}
+		}
+	case 4:
+		data.Value, err = readInt(buf, 8, byteOrder)
+		if err != nil {
+			return nil, NbtParseError{"Reading int64", err}
+		}
 	default:
 		return nil, NbtParseError{"TagType not recognized", nil}
 	}
