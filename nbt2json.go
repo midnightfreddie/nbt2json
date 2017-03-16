@@ -114,7 +114,6 @@ func getPayload(r *bytes.Reader, byteOrder binary.ByteOrder, tagType byte) (inte
 			return nil, NbtParseError{"Reading int64", err}
 		}
 	case 5:
-		// needs testing
 		var f float32
 		err = binary.Read(r, byteOrder, &f)
 		if err != nil {
@@ -122,7 +121,6 @@ func getPayload(r *bytes.Reader, byteOrder binary.ByteOrder, tagType byte) (inte
 		}
 		output = f
 	case 6:
-		// needs testing
 		var f float64
 		err = binary.Read(r, byteOrder, &f)
 		if err != nil {
@@ -130,7 +128,6 @@ func getPayload(r *bytes.Reader, byteOrder binary.ByteOrder, tagType byte) (inte
 		}
 		output = f
 	case 7:
-		// needs testing
 		var byteArray []byte
 		var oneByte byte
 		numRecords, err := readInt(r, 4, byteOrder)
@@ -146,7 +143,6 @@ func getPayload(r *bytes.Reader, byteOrder binary.ByteOrder, tagType byte) (inte
 		}
 		output = byteArray
 	case 8:
-		// needs testing
 		strLen, err := readInt(r, 2, byteOrder)
 		if err != nil {
 			return nil, NbtParseError{"Reading string tag length", err}
@@ -158,7 +154,6 @@ func getPayload(r *bytes.Reader, byteOrder binary.ByteOrder, tagType byte) (inte
 		}
 		output = string(utf8String[:])
 	case 9:
-		// needs testing
 		var tagList NbtTagList
 		err = binary.Read(r, byteOrder, &tagList.TagListType)
 		if err != nil {
@@ -195,7 +190,6 @@ func getPayload(r *bytes.Reader, byteOrder binary.ByteOrder, tagType byte) (inte
 		}
 		output = compound
 	case 11:
-		// needs testing
 		var intArray []int32
 		var oneInt int32
 		numRecords, err := readInt(r, 4, byteOrder)

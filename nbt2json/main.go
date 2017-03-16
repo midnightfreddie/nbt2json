@@ -15,13 +15,13 @@ import (
 )
 
 func main() {
-	var nbtFile, jsonFile string
+	var nbtFile string
 	var byteOrder binary.ByteOrder
 	var skipBytes int
 	app := cli.NewApp()
 	app.Name = "NBT to JSON"
 	app.Version = "0.0.0"
-	app.Usage = "UNDER DEVELOPMENT, MOST OR ALL OPTIONS NOT IMPLEMENTED - Converts NBT-encoded data to JSON"
+	app.Usage = "Converts NBT-encoded data to JSON"
 	app.Flags = []cli.Flag{
 		// cli.BoolFlag{
 		// 	Name:  "reverse, json2nbt, r",
@@ -41,12 +41,12 @@ func main() {
 			Usage:       "NBT `FILE` path",
 			Destination: &nbtFile,
 		},
-		cli.StringFlag{
-			Name:        "json-file, j",
-			Value:       "-",
-			Usage:       "JSON `FILE` path",
-			Destination: &jsonFile,
-		},
+		// cli.StringFlag{
+		// 	Name:        "json-file, j",
+		// 	Value:       "-",
+		// 	Usage:       "JSON `FILE` path",
+		// 	Destination: &jsonFile,
+		// },
 		cli.IntFlag{
 			Name:        "skip",
 			Value:       0,
