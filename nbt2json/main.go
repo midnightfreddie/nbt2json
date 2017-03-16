@@ -8,6 +8,8 @@ import (
 
 	"bytes"
 
+	"io/ioutil"
+
 	"github.com/midnightfreddie/nbt2json"
 	"github.com/urfave/cli"
 )
@@ -84,6 +86,17 @@ func main() {
 		}
 		fmt.Println(string(out[:]))
 		myNbt = []byte{10, 0, 0, 1, 2, 0, 'h', 'i', 1, 1, 2, 0, 'h', 'o', 2, 0}
+		buf = bytes.NewReader(myNbt)
+		out, err = nbt2json.Nbt2Json(buf, byteOrder)
+		if err != nil {
+			return err
+		}
+		fmt.Println(string(out[:]))
+
+		myNbt, err = ioutil.ReadFile(`c:\temp\nbttest.bin`)
+		if err != nil {
+			return err
+		}
 		buf = bytes.NewReader(myNbt)
 		out, err = nbt2json.Nbt2Json(buf, byteOrder)
 		if err != nil {

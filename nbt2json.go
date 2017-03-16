@@ -16,7 +16,7 @@ type NbtTag struct {
 
 // NbtTagList represents an NBT tag list
 type NbtTagList struct {
-	TagListType byte          `json:"tagType"`
+	TagListType byte          `json:"tagListType"`
 	List        []interface{} `json:"list"`
 }
 
@@ -82,7 +82,7 @@ func Nbt2Json(r *bytes.Reader, byteOrder binary.ByteOrder) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	outJson, err := json.Marshal(data)
+	outJson, err := json.MarshalIndent(data, "", "  ")
 	return outJson, nil
 }
 
