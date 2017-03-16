@@ -24,11 +24,11 @@ func main() {
 		// },
 		cli.BoolTFlag{
 			Name:  "little-endian, little, mcpe, l",
-			Usage: "Number format for Minecraft Pocket Edition and Windows 10 Edition",
+			Usage: "Number format for Minecraft Pocket Edition and Windows 10 Edition (default)",
 		},
 		cli.BoolFlag{
 			Name:  "big-endian, big, java, pc, b",
-			Usage: "Number format for Minecraft Pocket Edition and Windows 10 Edition",
+			Usage: "Number format for PC/Java-based Minecraft and most other NBT tools",
 		},
 		cli.StringFlag{
 			Name:        "nbt-file, n",
