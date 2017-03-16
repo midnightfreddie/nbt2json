@@ -41,6 +41,12 @@ func main() {
 			return err
 		}
 		fmt.Println(string(out[:]))
+		myString := "{ \"type\": 0, \"value\": \"Hi\"}"
+		out2, err := nbt2json.Json2Nbt(myString)
+		if err != nil {
+			return err
+		}
+		fmt.Printf("%v\n", out2)
 		return nil
 	}
 
