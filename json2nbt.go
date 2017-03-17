@@ -66,123 +66,134 @@ func writeTag(w io.Writer, byteOrder binary.ByteOrder, myMap interface{}) error 
 			} else {
 				return JsonParseError{"name field not a string", err}
 			}
-			switch int(tagType) {
-			case 1:
-				if i, ok := m["value"].(float64); ok {
-					err = binary.Write(w, byteOrder, int8(i))
-					if err != nil {
-						return JsonParseError{"Error writing byte payload", err}
-					}
-				} else {
-					return JsonParseError{"Tag Byte value field not a number", err}
-				}
-			case 2:
-				if i, ok := m["value"].(float64); ok {
-					err = binary.Write(w, byteOrder, int16(i))
-					if err != nil {
-						return JsonParseError{"Error writing short payload", err}
-					}
-				} else {
-					return JsonParseError{"Tag Byte value field not a number", err}
-				}
-			case 3:
-				if i, ok := m["value"].(float64); ok {
-					err = binary.Write(w, byteOrder, int32(i))
-					if err != nil {
-						return JsonParseError{"Error writing int32 payload", err}
-					}
-				} else {
-					return JsonParseError{"Tag Byte value field not a number", err}
-				}
-			case 4:
-				if i, ok := m["value"].(float64); ok {
-					err = binary.Write(w, byteOrder, int64(i))
-					if err != nil {
-						return JsonParseError{"Error writing int64 payload", err}
-					}
-				} else {
-					return JsonParseError{"Tag Byte value field not a number", err}
-				}
-			case 5:
-				if f, ok := m["value"].(float64); ok {
-					err = binary.Write(w, byteOrder, float32(f))
-					if err != nil {
-						return JsonParseError{"Error writing float32 payload", err}
-					}
-				} else {
-					return JsonParseError{"Tag Byte value field not a number", err}
-				}
-			case 6:
-				if f, ok := m["value"].(float64); ok {
-					err = binary.Write(w, byteOrder, f)
-					if err != nil {
-						return JsonParseError{"Error writing float64 payload", err}
-					}
-				} else {
-					return JsonParseError{"Tag Byte value field not a number", err}
-				}
-			case 7:
-				if values, ok := m["value"].([]interface{}); ok {
-					err = binary.Write(w, byteOrder, int32(len(values)))
-					if err != nil {
-						return JsonParseError{"Error writing byte array length", err}
-					}
-					for _, value := range values {
-						if i, ok := value.(float64); ok {
-							err = binary.Write(w, byteOrder, int8(i))
-							if err != nil {
-								return JsonParseError{"Error writing element of byte array", err}
-							}
-						} else {
-							return JsonParseError{"Tag Byte value field not a number", err}
-						}
-					}
-				} else {
-					fmt.Printf("%v\n", m["value"])
-					return JsonParseError{"Tag Byte Array value field not an array", err}
-				}
-			case 8:
-				if s, ok := m["value"].(string); ok {
-					err = binary.Write(w, byteOrder, int16(len([]byte(s))))
-					if err != nil {
-						return JsonParseError{"Error writing string length", err}
-					}
-					err = binary.Write(w, byteOrder, []byte(s))
-					if err != nil {
-						return JsonParseError{"Error writing string payload", err}
-					}
-				} else {
-					return JsonParseError{"Tag String value field not a number", err}
-				}
-
-			case 11:
-				if values, ok := m["value"].([]interface{}); ok {
-					err = binary.Write(w, byteOrder, int32(len(values)))
-					if err != nil {
-						return JsonParseError{"Error writing int32 array length", err}
-					}
-					for _, value := range values {
-						if i, ok := value.(float64); ok {
-							err = binary.Write(w, byteOrder, int32(i))
-							if err != nil {
-								return JsonParseError{"Error writing element of int32 array", err}
-							}
-						} else {
-							return JsonParseError{"Tag Byte value field not a number", err}
-						}
-					}
-				} else {
-					fmt.Printf("%v\n", m["value"])
-					return JsonParseError{"Tag Byte Array value field not an array", err}
-				}
-			default:
-				return JsonParseError{"tagType " + string(int(tagType)) + " is not recognized", err}
+			err = writePayload(w, byteOrder, m, tagType)
+			if err != nil {
+				return err
 			}
+
 		} else {
 			return JsonParseError{"tagType is not numeric", err}
 		}
 	} else {
 		return JsonParseError{"writeTag: myMap is not map[string]interface{}", err}
+	}
+	return err
+}
+
+func writePayload(w io.Writer, byteOrder binary.ByteOrder, m map[string]interface{}, tagType float64) error {
+	var err error
+
+	switch int(tagType) {
+	case 1:
+		if i, ok := m["value"].(float64); ok {
+			err = binary.Write(w, byteOrder, int8(i))
+			if err != nil {
+				return JsonParseError{"Error writing byte payload", err}
+			}
+		} else {
+			return JsonParseError{"Tag Byte value field not a number", err}
+		}
+	case 2:
+		if i, ok := m["value"].(float64); ok {
+			err = binary.Write(w, byteOrder, int16(i))
+			if err != nil {
+				return JsonParseError{"Error writing short payload", err}
+			}
+		} else {
+			return JsonParseError{"Tag Byte value field not a number", err}
+		}
+	case 3:
+		if i, ok := m["value"].(float64); ok {
+			err = binary.Write(w, byteOrder, int32(i))
+			if err != nil {
+				return JsonParseError{"Error writing int32 payload", err}
+			}
+		} else {
+			return JsonParseError{"Tag Byte value field not a number", err}
+		}
+	case 4:
+		if i, ok := m["value"].(float64); ok {
+			err = binary.Write(w, byteOrder, int64(i))
+			if err != nil {
+				return JsonParseError{"Error writing int64 payload", err}
+			}
+		} else {
+			return JsonParseError{"Tag Byte value field not a number", err}
+		}
+	case 5:
+		if f, ok := m["value"].(float64); ok {
+			err = binary.Write(w, byteOrder, float32(f))
+			if err != nil {
+				return JsonParseError{"Error writing float32 payload", err}
+			}
+		} else {
+			return JsonParseError{"Tag Byte value field not a number", err}
+		}
+	case 6:
+		if f, ok := m["value"].(float64); ok {
+			err = binary.Write(w, byteOrder, f)
+			if err != nil {
+				return JsonParseError{"Error writing float64 payload", err}
+			}
+		} else {
+			return JsonParseError{"Tag Byte value field not a number", err}
+		}
+	case 7:
+		if values, ok := m["value"].([]interface{}); ok {
+			err = binary.Write(w, byteOrder, int32(len(values)))
+			if err != nil {
+				return JsonParseError{"Error writing byte array length", err}
+			}
+			for _, value := range values {
+				if i, ok := value.(float64); ok {
+					err = binary.Write(w, byteOrder, int8(i))
+					if err != nil {
+						return JsonParseError{"Error writing element of byte array", err}
+					}
+				} else {
+					return JsonParseError{"Tag Byte value field not a number", err}
+				}
+			}
+		} else {
+			fmt.Printf("%v\n", m["value"])
+			return JsonParseError{"Tag Byte Array value field not an array", err}
+		}
+	case 8:
+		if s, ok := m["value"].(string); ok {
+			err = binary.Write(w, byteOrder, int16(len([]byte(s))))
+			if err != nil {
+				return JsonParseError{"Error writing string length", err}
+			}
+			err = binary.Write(w, byteOrder, []byte(s))
+			if err != nil {
+				return JsonParseError{"Error writing string payload", err}
+			}
+		} else {
+			return JsonParseError{"Tag String value field not a number", err}
+		}
+
+	case 11:
+		if values, ok := m["value"].([]interface{}); ok {
+			err = binary.Write(w, byteOrder, int32(len(values)))
+			if err != nil {
+				return JsonParseError{"Error writing int32 array length", err}
+			}
+			for _, value := range values {
+				if i, ok := value.(float64); ok {
+					err = binary.Write(w, byteOrder, int32(i))
+					if err != nil {
+						return JsonParseError{"Error writing element of int32 array", err}
+					}
+				} else {
+					return JsonParseError{"Tag Byte value field not a number", err}
+				}
+			}
+		} else {
+			fmt.Printf("%v\n", m["value"])
+			return JsonParseError{"Tag Byte Array value field not an array", err}
+		}
+	default:
+		return JsonParseError{"tagType " + string(int(tagType)) + " is not recognized", err}
 	}
 	return err
 }
