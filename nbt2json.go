@@ -44,28 +44,6 @@ func Nbt2Json(b []byte, byteOrder binary.ByteOrder) ([]byte, error) {
 	return jsonOut, nil
 }
 
-// Reads 0-8 bytes and returns an int64 value
-func readInt(r *bytes.Reader, numBytes int, byteOrder binary.ByteOrder) (i int64, err error) {
-	var myInt64 []byte
-	temp := make([]byte, numBytes)
-	err = binary.Read(r, byteOrder, &temp)
-	if err != nil {
-		return i, NbtParseError{fmt.Sprintf("Reading %v bytes for intxx", numBytes), err}
-	}
-	padding := make([]byte, 8-numBytes)
-	if byteOrder == binary.BigEndian {
-		myInt64 = append(padding, temp...)
-	} else if byteOrder == binary.LittleEndian {
-		myInt64 = append(temp, padding...)
-	} else {
-		_ = myInt64
-		return i, NbtParseError{"byteOrder not recognized", nil}
-	}
-	buf := bytes.NewReader(myInt64)
-	err = binary.Read(buf, byteOrder, &i)
-	return i, err
-}
-
 // getTag broken out form Nbt2Json to allow recursion with reader but public input is []byte
 func getTag(r *bytes.Reader, byteOrder binary.ByteOrder) ([]byte, error) {
 	var data NbtTag
@@ -76,8 +54,8 @@ func getTag(r *bytes.Reader, byteOrder binary.ByteOrder) ([]byte, error) {
 	// do not try to fetch name for TagType 0 which is compound end tag
 	if data.TagType != 0 {
 		var err error
-		var nameLen int64
-		nameLen, err = readInt(r, 2, byteOrder)
+		var nameLen int16
+		err = binary.Read(r, byteOrder, &nameLen)
 		if err != nil {
 			return nil, NbtParseError{"Reading Name length", err}
 		}
@@ -104,25 +82,33 @@ func getPayload(r *bytes.Reader, byteOrder binary.ByteOrder, tagType byte) (inte
 	case 0:
 		// end tag for compound; do nothing further
 	case 1:
-		output, err = readInt(r, 1, byteOrder)
+		var i int8
+		err = binary.Read(r, byteOrder, &i)
 		if err != nil {
 			return nil, NbtParseError{"Reading int8", err}
 		}
+		output = i
 	case 2:
-		output, err = readInt(r, 2, byteOrder)
+		var i int16
+		err = binary.Read(r, byteOrder, &i)
 		if err != nil {
 			return nil, NbtParseError{"Reading int16", err}
 		}
+		output = i
 	case 3:
-		output, err = readInt(r, 4, byteOrder)
+		var i int32
+		err = binary.Read(r, byteOrder, &i)
 		if err != nil {
 			return nil, NbtParseError{"Reading int32", err}
 		}
+		output = i
 	case 4:
-		output, err = readInt(r, 8, byteOrder)
+		var i int64
+		err = binary.Read(r, byteOrder, &i)
 		if err != nil {
 			return nil, NbtParseError{"Reading int64", err}
 		}
+		output = i
 	case 5:
 		var f float32
 		err = binary.Read(r, byteOrder, &f)
@@ -138,14 +124,15 @@ func getPayload(r *bytes.Reader, byteOrder binary.ByteOrder, tagType byte) (inte
 		}
 		output = f
 	case 7:
-		var byteArray []byte
-		var oneByte byte
-		numRecords, err := readInt(r, 4, byteOrder)
+		var byteArray []int8
+		var oneByte int8
+		var numRecords int32
+		err := binary.Read(r, byteOrder, &numRecords)
 		if err != nil {
 			return nil, NbtParseError{"Reading byte array tag length", err}
 		}
-		for i := int64(1); i <= numRecords; i++ {
-			err := binary.Read(r, byteOrder, &oneByte)
+		for i := int32(1); i <= numRecords; i++ {
+			err = binary.Read(r, byteOrder, &oneByte)
 			if err != nil {
 				return nil, NbtParseError{"Reading byte in byte array tag", err}
 			}
@@ -153,7 +140,8 @@ func getPayload(r *bytes.Reader, byteOrder binary.ByteOrder, tagType byte) (inte
 		}
 		output = byteArray
 	case 8:
-		strLen, err := readInt(r, 2, byteOrder)
+		var strLen int16
+		err := binary.Read(r, byteOrder, &strLen)
 		if err != nil {
 			return nil, NbtParseError{"Reading string tag length", err}
 		}
@@ -169,11 +157,12 @@ func getPayload(r *bytes.Reader, byteOrder binary.ByteOrder, tagType byte) (inte
 		if err != nil {
 			return nil, NbtParseError{"Reading TagType", err}
 		}
-		numRecords, err := readInt(r, 4, byteOrder)
+		var numRecords int32
+		err := binary.Read(r, byteOrder, &numRecords)
 		if err != nil {
 			return nil, NbtParseError{"Reading list tag length", err}
 		}
-		for i := int64(1); i <= numRecords; i++ {
+		for i := int32(1); i <= numRecords; i++ {
 			payload, err := getPayload(r, byteOrder, tagList.TagListType)
 			if err != nil {
 				return nil, NbtParseError{"Reading list tag item", err}
@@ -183,8 +172,8 @@ func getPayload(r *bytes.Reader, byteOrder binary.ByteOrder, tagType byte) (inte
 		output = tagList
 	case 10:
 		var compound []json.RawMessage
-		var tagtype int64
-		for tagtype, err = readInt(r, 1, byteOrder); tagtype != 0; tagtype, err = readInt(r, 1, byteOrder) {
+		var tagType byte
+		for err = binary.Read(r, byteOrder, &tagType); tagType != 0; err = binary.Read(r, byteOrder, &tagType) {
 			if err != nil {
 				return nil, NbtParseError{"compound: reading next tag type", err}
 			}
@@ -201,12 +190,12 @@ func getPayload(r *bytes.Reader, byteOrder binary.ByteOrder, tagType byte) (inte
 		output = compound
 	case 11:
 		var intArray []int32
-		var oneInt int32
-		numRecords, err := readInt(r, 4, byteOrder)
+		var numRecords, oneInt int32
+		err := binary.Read(r, byteOrder, &numRecords)
 		if err != nil {
 			return nil, NbtParseError{"Reading int array tag length", err}
 		}
-		for i := int64(1); i <= numRecords; i++ {
+		for i := int32(1); i <= numRecords; i++ {
 			err := binary.Read(r, byteOrder, &oneInt)
 			if err != nil {
 				return nil, NbtParseError{"Reading int in int array tag", err}
