@@ -24,7 +24,6 @@ func (e JsonParseError) Error() string {
 }
 
 // Json2Nbt converts JSON byte array to uncompressed NBT byte array
-// During development, returning a hex dump instead of raw data
 func Json2Nbt(b []byte, byteOrder binary.ByteOrder) ([]byte, error) {
 	nbtOut := new(bytes.Buffer)
 	var jsonData interface{}
@@ -35,7 +34,6 @@ func Json2Nbt(b []byte, byteOrder binary.ByteOrder) ([]byte, error) {
 	}
 	err = writeTag(nbtOut, byteOrder, jsonData)
 	if err != nil {
-		// _, _ = os.Stderr.WriteString(hex.Dump(nbtOut.Bytes()))
 		return nil, err
 	}
 
