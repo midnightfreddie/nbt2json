@@ -155,7 +155,6 @@ func writePayload(w io.Writer, byteOrder binary.ByteOrder, m map[string]interfac
 				}
 			}
 		} else {
-			fmt.Printf("%v\n", m["value"])
 			return JsonParseError{"Tag Byte Array value field not an array", err}
 		}
 	case 8:
@@ -171,7 +170,48 @@ func writePayload(w io.Writer, byteOrder binary.ByteOrder, m map[string]interfac
 		} else {
 			return JsonParseError{"Tag String value field not a number", err}
 		}
+	case 9:
+		var tagListType float64
+		if listMap, ok := m["value"].(map[string]interface{}); ok {
+			if tagListType, ok := listMap["tagListType"].(float64); ok {
+				err = binary.Write(w, byteOrder, byte(tagListType))
+				if err != nil {
+					return JsonParseError{"While writing tag list type", err}
+				}
+			}
+			if values, ok := listMap["list"].([]interface{}); ok {
+				err = binary.Write(w, byteOrder, int32(len(values)))
+				for _, value := range values {
+					var fakeTag map[string]interface{}
+					fakeTag["value"] = value
+					err = writePayload(w, byteOrder, fakeTag, tagListType)
+					if err != nil {
+						return JsonParseError{"While writing tag list of type " + string(int(tagListType)), err}
+					}
+				}
+			} else {
+				return JsonParseError{"Tag List's List value field not an array", err}
+			}
 
+		} else {
+			return JsonParseError{"Tag List value field not an object", err}
+		}
+	case 10:
+		if values, ok := m["value"].([]interface{}); ok {
+			for _, value := range values {
+				err = writeTag(w, byteOrder, value)
+				if err != nil {
+					return JsonParseError{"While writing Compound tags", err}
+				}
+			}
+			// write the end tag which is just a single byte 0
+			err = binary.Write(w, byteOrder, byte(0))
+			if err != nil {
+				return JsonParseError{"Writing End tag", err}
+			}
+		} else {
+			return JsonParseError{"Tag Compound value field not an array", err}
+		}
 	case 11:
 		if values, ok := m["value"].([]interface{}); ok {
 			err = binary.Write(w, byteOrder, int32(len(values)))
@@ -185,12 +225,11 @@ func writePayload(w io.Writer, byteOrder binary.ByteOrder, m map[string]interfac
 						return JsonParseError{"Error writing element of int32 array", err}
 					}
 				} else {
-					return JsonParseError{"Tag Byte value field not a number", err}
+					return JsonParseError{"Tag Int value field not a number", err}
 				}
 			}
 		} else {
-			fmt.Printf("%v\n", m["value"])
-			return JsonParseError{"Tag Byte Array value field not an array", err}
+			return JsonParseError{"Tag Int Array value field not an array", err}
 		}
 	default:
 		return JsonParseError{"tagType " + string(int(tagType)) + " is not recognized", err}
