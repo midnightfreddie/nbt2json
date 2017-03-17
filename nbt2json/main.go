@@ -23,10 +23,12 @@ func main() {
 	app.Version = "0.0.0"
 	app.Usage = "Converts NBT-encoded data to JSON"
 	app.Flags = []cli.Flag{
-		// cli.BoolFlag{
-		// 	Name:  "reverse, json2nbt, r",
-		// 	Usage: "Convert JSON to NBT instead",
-		// },
+		cli.BoolFlag{
+			Name: "reverse, json2nbt, r",
+			// Usage: "Convert JSON to NBT instead",
+			Usage:  "FLAG UNDER DEVELOPMENT, NOT YET WORKING",
+			Hidden: true,
+		},
 		cli.BoolTFlag{
 			Name:  "little-endian, little, mcpe, l",
 			Usage: "Number format for Minecraft Pocket Edition and Windows 10 Edition (default)",
@@ -61,43 +63,54 @@ func main() {
 			byteOrder = binary.LittleEndian
 		}
 
-		var myNbt []byte
+		var myNbt, myJson, out []byte
 		var err error
 
-		if c.String("nbt-file") == "-" {
-			myNbt, err = ioutil.ReadAll(os.Stdin)
+		if c.String("reverse") == "true" {
+			myJson = []byte(`{"tagType": 1,"name": "Difficulty","value": 2}`)
+
+			// fmt.Println(myJson)
+			myNbt, err = nbt2json.Json2Nbt(myJson, binary.LittleEndian)
 			if err != nil {
 				return err
 			}
+			fmt.Println(string(myNbt[:]))
 		} else {
-			f, err := os.Open(c.String("nbt-file"))
-			if err != nil {
-				return err
-			}
-			defer f.Close()
-			myNbt, err = ioutil.ReadAll(f)
-			if err != nil {
-				return err
-			}
-		}
 
-		// is it gzipped?
-		if (myNbt[0] == 0x1f) && (myNbt[1] == 0x8b) {
-			var uncompressed []byte
-			buf := bytes.NewReader(myNbt)
-			zr, err := gzip.NewReader(buf)
+			if c.String("nbt-file") == "-" {
+				myNbt, err = ioutil.ReadAll(os.Stdin)
+				if err != nil {
+					return err
+				}
+			} else {
+				f, err := os.Open(c.String("nbt-file"))
+				if err != nil {
+					return err
+				}
+				defer f.Close()
+				myNbt, err = ioutil.ReadAll(f)
+				if err != nil {
+					return err
+				}
+			}
+
+			// is it gzipped?
+			if (myNbt[0] == 0x1f) && (myNbt[1] == 0x8b) {
+				var uncompressed []byte
+				buf := bytes.NewReader(myNbt)
+				zr, err := gzip.NewReader(buf)
+				if err != nil {
+					return err
+				}
+				uncompressed, err = ioutil.ReadAll(zr)
+				myNbt = uncompressed
+			}
+			out, err = nbt2json.Nbt2Json(myNbt[skipBytes:], byteOrder)
 			if err != nil {
 				return err
 			}
-			uncompressed, err = ioutil.ReadAll(zr)
-			myNbt = uncompressed
+			fmt.Println(string(out[:]))
 		}
-		out, err := nbt2json.Nbt2Json(myNbt[skipBytes:], byteOrder)
-		if err != nil {
-			return err
-		}
-		fmt.Println(string(out[:]))
-
 		return nil
 	}
 
