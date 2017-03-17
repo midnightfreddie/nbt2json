@@ -15,7 +15,7 @@ import (
 )
 
 func main() {
-	var nbtFile string
+	var nbtFile, jsonFile string
 	var byteOrder binary.ByteOrder
 	var skipBytes int
 	app := cli.NewApp()
@@ -43,12 +43,12 @@ func main() {
 			Usage:       "NBT `FILE` path",
 			Destination: &nbtFile,
 		},
-		// cli.StringFlag{
-		// 	Name:        "json-file, j",
-		// 	Value:       "-",
-		// 	Usage:       "JSON `FILE` path",
-		// 	Destination: &jsonFile,
-		// },
+		cli.StringFlag{
+			Name:        "json-file, j",
+			Value:       "-",
+			Usage:       "JSON `FILE` path",
+			Destination: &jsonFile,
+		},
 		cli.IntFlag{
 			Name:        "skip",
 			Value:       0,
@@ -67,14 +67,45 @@ func main() {
 		var err error
 
 		if c.String("reverse") == "true" {
-			myJson = []byte(`{"tagType": 2,"name": "Difficulty","value": 2}`)
+			// myJson = []byte(`{"tagType": 6,"name": "Difficulty","value": 2}`)
+			// myJson = []byte(`{"tagType": 11,"name": "Difficulty","value": [2, 3, 4]}`)
+			// myJson = []byte(`{"tagType": 8,"name": "Difficulty","value": "hard mode"}`)
 
 			// fmt.Println(myJson)
+
+			if c.String("json-file") == "-" {
+				myJson, err = ioutil.ReadAll(os.Stdin)
+				if err != nil {
+					return err
+				}
+			} else {
+				f, err := os.Open(c.String("json-file"))
+				if err != nil {
+					return err
+				}
+				defer f.Close()
+				myJson, err = ioutil.ReadAll(f)
+				if err != nil {
+					return err
+				}
+			}
+
 			myNbt, err = nbt2json.Json2Nbt(myJson, byteOrder)
 			if err != nil {
 				return err
 			}
-			fmt.Println(string(myNbt[:]))
+			// fmt.Printf(string(myNbt[:]))
+			if c.String("nbt-file") == "-" {
+				err = binary.Write(os.Stdout, binary.LittleEndian, myNbt)
+				if err != nil {
+					return err
+				}
+			} else {
+				err = ioutil.WriteFile(c.String("nbt-file"), myNbt, 0644)
+				if err != nil {
+					return err
+				}
+			}
 		} else {
 
 			if c.String("nbt-file") == "-" {

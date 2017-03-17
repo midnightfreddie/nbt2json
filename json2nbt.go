@@ -3,11 +3,9 @@ package nbt2json
 import (
 	"bytes"
 	"encoding/binary"
-	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io"
-	"os"
 	"strconv"
 )
 
@@ -37,11 +35,10 @@ func Json2Nbt(b []byte, byteOrder binary.ByteOrder) ([]byte, error) {
 	}
 	err = writeTag(nbtOut, byteOrder, jsonData)
 	if err != nil {
-		_, _ = os.Stderr.WriteString(hex.Dump(nbtOut.Bytes()))
+		// _, _ = os.Stderr.WriteString(hex.Dump(nbtOut.Bytes()))
 		return nil, err
 	}
 
-	// return []byte(hex.Dump(nbtOut.Bytes())), nil
 	return nbtOut.Bytes(), nil
 }
 
@@ -186,16 +183,24 @@ func writePayload(w io.Writer, byteOrder binary.ByteOrder, m map[string]interfac
 			}
 			if values, ok := listMap["list"].([]interface{}); ok {
 				err = binary.Write(w, byteOrder, int32(len(values)))
+				if err != nil {
+					return JsonParseError{"While writing tag list size", err}
+				}
 				for _, value := range values {
-					// var fakeTag map[string]interface{}
 					fakeTag := make(map[string]interface{})
-					// fakeTag["value"] = make(map[string]interface{})
 					fakeTag["value"] = value
 					err = writePayload(w, byteOrder, fakeTag, tagListType)
 					if err != nil {
 						return JsonParseError{"While writing tag list of type " + strconv.Itoa(int(tagListType)), err}
 					}
 				}
+			} else if listMap["list"] == nil {
+				// NBT lists can be null / nil and therefore aren't represented as an array in JSON
+				err = binary.Write(w, byteOrder, int32(0))
+				if err != nil {
+					return JsonParseError{"While writing tag list null size", err}
+				}
+				return nil
 			} else {
 				return JsonParseError{"Tag List's List value field not an array", err}
 			}
