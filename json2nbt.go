@@ -39,6 +39,7 @@ func Json2Nbt(b []byte, byteOrder binary.ByteOrder) ([]byte, error) {
 	}
 
 	return []byte(hex.Dump(nbtOut.Bytes())), nil
+	// return nbtOut.Bytes(), nil
 }
 
 func writeTag(w io.Writer, byteOrder binary.ByteOrder, myMap interface{}) error {
@@ -140,7 +141,40 @@ func writeTag(w io.Writer, byteOrder binary.ByteOrder, myMap interface{}) error 
 					fmt.Printf("%v\n", m["value"])
 					return JsonParseError{"Tag Byte Array value field not an array", err}
 				}
+			case 8:
+				if s, ok := m["value"].(string); ok {
+					err = binary.Write(w, byteOrder, int16(len([]byte(s))))
+					if err != nil {
+						return JsonParseError{"Error writing string length", err}
+					}
+					err = binary.Write(w, byteOrder, []byte(s))
+					if err != nil {
+						return JsonParseError{"Error writing string payload", err}
+					}
+				} else {
+					return JsonParseError{"Tag String value field not a number", err}
+				}
 
+			case 11:
+				if values, ok := m["value"].([]interface{}); ok {
+					err = binary.Write(w, byteOrder, int32(len(values)))
+					if err != nil {
+						return JsonParseError{"Error writing int32 array length", err}
+					}
+					for _, value := range values {
+						if i, ok := value.(float64); ok {
+							err = binary.Write(w, byteOrder, int32(i))
+							if err != nil {
+								return JsonParseError{"Error writing element of int32 array", err}
+							}
+						} else {
+							return JsonParseError{"Tag Byte value field not a number", err}
+						}
+					}
+				} else {
+					fmt.Printf("%v\n", m["value"])
+					return JsonParseError{"Tag Byte Array value field not an array", err}
+				}
 			default:
 				return JsonParseError{"tagType " + string(int(tagType)) + " is not recognized", err}
 			}
