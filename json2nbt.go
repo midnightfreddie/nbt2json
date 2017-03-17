@@ -7,6 +7,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"os"
+	"strconv"
 )
 
 // JsonParseError is when the data does not match an expected pattern. Pass it message string and downstream error
@@ -35,11 +37,12 @@ func Json2Nbt(b []byte, byteOrder binary.ByteOrder) ([]byte, error) {
 	}
 	err = writeTag(nbtOut, byteOrder, jsonData)
 	if err != nil {
+		_, _ = os.Stderr.WriteString(hex.Dump(nbtOut.Bytes()))
 		return nil, err
 	}
 
-	return []byte(hex.Dump(nbtOut.Bytes())), nil
-	// return nbtOut.Bytes(), nil
+	// return []byte(hex.Dump(nbtOut.Bytes())), nil
+	return nbtOut.Bytes(), nil
 }
 
 func writeTag(w io.Writer, byteOrder binary.ByteOrder, myMap interface{}) error {
@@ -171,9 +174,11 @@ func writePayload(w io.Writer, byteOrder binary.ByteOrder, m map[string]interfac
 			return JsonParseError{"Tag String value field not a number", err}
 		}
 	case 9:
+		// important: tagListType needs to be in scope to be passed to writePayload
+		// := were keeping it in a lower scope and zeroing it out.
 		var tagListType float64
 		if listMap, ok := m["value"].(map[string]interface{}); ok {
-			if tagListType, ok := listMap["tagListType"].(float64); ok {
+			if tagListType, ok = listMap["tagListType"].(float64); ok {
 				err = binary.Write(w, byteOrder, byte(tagListType))
 				if err != nil {
 					return JsonParseError{"While writing tag list type", err}
@@ -182,11 +187,13 @@ func writePayload(w io.Writer, byteOrder binary.ByteOrder, m map[string]interfac
 			if values, ok := listMap["list"].([]interface{}); ok {
 				err = binary.Write(w, byteOrder, int32(len(values)))
 				for _, value := range values {
-					var fakeTag map[string]interface{}
+					// var fakeTag map[string]interface{}
+					fakeTag := make(map[string]interface{})
+					// fakeTag["value"] = make(map[string]interface{})
 					fakeTag["value"] = value
 					err = writePayload(w, byteOrder, fakeTag, tagListType)
 					if err != nil {
-						return JsonParseError{"While writing tag list of type " + string(int(tagListType)), err}
+						return JsonParseError{"While writing tag list of type " + strconv.Itoa(int(tagListType)), err}
 					}
 				}
 			} else {
@@ -232,7 +239,7 @@ func writePayload(w io.Writer, byteOrder binary.ByteOrder, m map[string]interfac
 			return JsonParseError{"Tag Int Array value field not an array", err}
 		}
 	default:
-		return JsonParseError{"tagType " + string(int(tagType)) + " is not recognized", err}
+		return JsonParseError{"tagType " + strconv.Itoa(int(tagType)) + " is not recognized", err}
 	}
 	return err
 }
