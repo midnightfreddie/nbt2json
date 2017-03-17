@@ -67,10 +67,10 @@ func main() {
 		var err error
 
 		if c.String("reverse") == "true" {
-			myJson = []byte(`{"tagType": 1,"name": "Difficulty","value": 2}`)
+			myJson = []byte(`{"tagType": 2,"name": "Difficulty","value": 2}`)
 
 			// fmt.Println(myJson)
-			myNbt, err = nbt2json.Json2Nbt(myJson, binary.LittleEndian)
+			myNbt, err = nbt2json.Json2Nbt(myJson, byteOrder)
 			if err != nil {
 				return err
 			}
