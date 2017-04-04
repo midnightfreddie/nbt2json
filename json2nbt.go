@@ -32,9 +32,18 @@ func Json2Nbt(b []byte, byteOrder binary.ByteOrder) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	err = writeTag(nbtOut, byteOrder, jsonData)
-	if err != nil {
-		return nil, err
+	if jsonArray, ok := jsonData.([]interface{}); ok {
+		for jsonDatum := range jsonArray {
+			err = writeTag(nbtOut, byteOrder, jsonDatum)
+			if err != nil {
+				return nil, err
+			}
+		}
+	} else {
+		err = writeTag(nbtOut, byteOrder, jsonData)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return nbtOut.Bytes(), nil

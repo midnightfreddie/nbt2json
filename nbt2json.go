@@ -37,7 +37,16 @@ func (e NbtParseError) Error() string {
 // Nbt2Json converts uncompressed NBT byte array to JSON byte array
 func Nbt2Json(b []byte, byteOrder binary.ByteOrder) ([]byte, error) {
 	buf := bytes.NewReader(b)
-	jsonOut, err := getTag(buf, byteOrder)
+	var jsonArray []*json.RawMessage
+	for buf.Len() > 0 {
+		element, err := getTag(buf, byteOrder)
+		if err != nil {
+			return nil, err
+		}
+		myTemp := json.RawMessage(element)
+		jsonArray = append(jsonArray, &myTemp)
+	}
+	jsonOut, err := json.MarshalIndent(jsonArray, "", "  ")
 	if err != nil {
 		return nil, err
 	}
