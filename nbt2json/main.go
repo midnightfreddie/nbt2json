@@ -56,6 +56,10 @@ func main() {
 			Usage:       "JSON `FILE` path",
 			Destination: &jsonFile,
 		},
+		cli.BoolFlag{
+			Name:  "yaml, yml, y",
+			Usage: "Use YAML instead of JSON",
+		},
 		cli.IntFlag{
 			Name:        "skip",
 			Value:       0,
@@ -135,7 +139,11 @@ func main() {
 				uncompressed, err = ioutil.ReadAll(zr)
 				myNbt = uncompressed
 			}
-			out, err = nbt2json.Nbt2Json(myNbt[skipBytes:], byteOrder)
+			if c.String("yaml") == "true" {
+				out, err = nbt2json.Nbt2Yaml(myNbt[skipBytes:], byteOrder)
+			} else {
+				out, err = nbt2json.Nbt2Json(myNbt[skipBytes:], byteOrder)
+			}
 			if err != nil {
 				return cli.NewExitError(err, 1)
 			}

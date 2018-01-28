@@ -5,6 +5,8 @@ import (
 	"encoding/binary"
 	"encoding/json"
 	"fmt"
+
+	"github.com/ghodss/yaml"
 )
 
 // NbtTag represents one NBT tag for each struct
@@ -32,6 +34,19 @@ func (e NbtParseError) Error() string {
 		s = fmt.Sprintf(": %s", e.e.Error())
 	}
 	return fmt.Sprintf("Error parsing NBT: %s%s", e.s, s)
+}
+
+// Nbt2Yaml converts uncompressed NBT byte array to YAML byte array
+func Nbt2Yaml(b []byte, byteOrder binary.ByteOrder) ([]byte, error) {
+	jsonOut, err := Nbt2Json(b, byteOrder)
+	if err != nil {
+		return nil, err
+	}
+	yamlOut, err := yaml.JSONToYAML(jsonOut)
+	if err != nil {
+		return yamlOut, err
+	}
+	return yamlOut, nil
 }
 
 // Nbt2Json converts uncompressed NBT byte array to JSON byte array
