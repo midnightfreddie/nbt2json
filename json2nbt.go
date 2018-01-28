@@ -41,11 +41,20 @@ func Yaml2Nbt(b []byte, byteOrder binary.ByteOrder) ([]byte, error) {
 // Json2Nbt converts JSON byte array to uncompressed NBT byte array
 func Json2Nbt(b []byte, byteOrder binary.ByteOrder) ([]byte, error) {
 	nbtOut := new(bytes.Buffer)
+	var nbtJsonData NbtJson
 	var jsonData interface{}
 	var err error
-	err = json.Unmarshal(b, &jsonData)
+	err = json.Unmarshal(b, &nbtJsonData)
 	if err != nil {
-		return nil, err
+		// TODO: Clarify in error that this is converting the top-level document
+		panic(err)
+		// return nil, err
+	}
+	jsonData, err = json.Marshal(nbtJsonData.Nbt)
+	if err != nil {
+		// TODO: Clarify in error that this is converting the nbt array
+		panic(err)
+		// return nil, err
 	}
 	if jsonArray, ok := jsonData.([]interface{}); ok {
 		for jsonDatum := range jsonArray {
