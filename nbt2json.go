@@ -64,7 +64,7 @@ func Nbt2Yaml(b []byte, byteOrder binary.ByteOrder, comment string) ([]byte, err
 	}
 	yamlOut, err := yaml.JSONToYAML(jsonOut)
 	if err != nil {
-		return yamlOut, err
+		return yamlOut, NbtParseError{"Error converting JSON to YAML. Oops. JSON conversion succeeded, so please report this error and use JSON instead.", err}
 	}
 	return yamlOut, nil
 }

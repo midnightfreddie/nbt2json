@@ -29,7 +29,7 @@ func (e JsonParseError) Error() string {
 func Yaml2Nbt(b []byte, byteOrder binary.ByteOrder) ([]byte, error) {
 	myJson, err := yaml.YAMLToJSON(b)
 	if err != nil {
-		return nil, err
+		return nil, JsonParseError{"Error converting YAML to JSON", err}
 	}
 	nbtOut, err := Json2Nbt(myJson, byteOrder)
 	if err != nil {
@@ -47,7 +47,7 @@ func Json2Nbt(b []byte, byteOrder binary.ByteOrder) ([]byte, error) {
 	var err error
 	err = json.Unmarshal(b, &nbtJsonData)
 	if err != nil {
-		return nil, JsonParseError{"Error converting top-level document", err}
+		return nil, JsonParseError{"Error parsing JSON input. Is input JSON-formatted?", err}
 	}
 	temp, err := json.Marshal(nbtJsonData.Nbt)
 	if err != nil {
