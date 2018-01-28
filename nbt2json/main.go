@@ -45,15 +45,15 @@ func main() {
 			Usage: "Number format for PC/Java-based Minecraft and most other NBT tools",
 		},
 		cli.StringFlag{
-			Name:        "nbt-file, n",
+			Name:        "in, i",
 			Value:       "-",
-			Usage:       "NBT `FILE` path",
+			Usage:       "Input `FILE` path",
 			Destination: &nbtFile,
 		},
 		cli.StringFlag{
-			Name:        "json-file, j",
+			Name:        "out, o",
 			Value:       "-",
-			Usage:       "JSON `FILE` path",
+			Usage:       "Output `FILE` path",
 			Destination: &jsonFile,
 		},
 		cli.BoolFlag{
@@ -74,17 +74,17 @@ func main() {
 			byteOrder = binary.LittleEndian
 		}
 
-		var myNbt, myJson, out []byte
+		var myNbt, myJson, outData []byte
 		var err error
 
 		if c.String("reverse") == "true" {
-			if c.String("json-file") == "-" {
+			if c.String("in") == "-" {
 				myJson, err = ioutil.ReadAll(os.Stdin)
 				if err != nil {
 					return cli.NewExitError(err, 1)
 				}
 			} else {
-				f, err := os.Open(c.String("json-file"))
+				f, err := os.Open(c.String("in"))
 				if err != nil {
 					return cli.NewExitError(err, 1)
 				}
@@ -105,26 +105,26 @@ func main() {
 					return cli.NewExitError(err, 1)
 				}
 			}
-			if c.String("nbt-file") == "-" {
+			if c.String("out") == "-" {
 				err = binary.Write(os.Stdout, binary.LittleEndian, myNbt)
 				if err != nil {
 					return cli.NewExitError(err, 1)
 				}
 			} else {
-				err = ioutil.WriteFile(c.String("nbt-file"), myNbt, 0644)
+				err = ioutil.WriteFile(c.String("out"), myNbt, 0644)
 				if err != nil {
 					return cli.NewExitError(err, 1)
 				}
 			}
 		} else {
 
-			if c.String("nbt-file") == "-" {
+			if c.String("in") == "-" {
 				myNbt, err = ioutil.ReadAll(os.Stdin)
 				if err != nil {
 					return cli.NewExitError(err, 1)
 				}
 			} else {
-				f, err := os.Open(c.String("nbt-file"))
+				f, err := os.Open(c.String("in"))
 				if err != nil {
 					return cli.NewExitError(err, 1)
 				}
@@ -147,17 +147,24 @@ func main() {
 				myNbt = uncompressed
 			}
 			if c.String("yaml") == "true" {
-				out, err = nbt2json.Nbt2Yaml(myNbt[skipBytes:], byteOrder)
+				outData, err = nbt2json.Nbt2Yaml(myNbt[skipBytes:], byteOrder)
 				if err != nil {
 					return cli.NewExitError(err, 1)
 				}
 			} else {
-				out, err = nbt2json.Nbt2Json(myNbt[skipBytes:], byteOrder)
+				outData, err = nbt2json.Nbt2Json(myNbt[skipBytes:], byteOrder)
 				if err != nil {
 					return cli.NewExitError(err, 1)
 				}
 			}
-			fmt.Println(string(out[:]))
+			if c.String("out") == "-" {
+				fmt.Println(string(outData[:]))
+			} else {
+				err = ioutil.WriteFile(c.String("out"), outData, 0644)
+				if err != nil {
+					return cli.NewExitError(err, 1)
+				}
+			}
 		}
 		return nil
 	}
