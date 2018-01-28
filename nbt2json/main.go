@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"time"
 
 	"encoding/binary"
 
@@ -20,8 +21,16 @@ func main() {
 	var skipBytes int
 	app := cli.NewApp()
 	app.Name = "NBT to JSON"
-	app.Version = "0.0.0"
-	app.Usage = "Converts NBT-encoded data to JSON"
+	app.Version = "0.1.0"
+	app.Compiled = time.Now()
+	app.Authors = []cli.Author{
+		cli.Author{
+			Name:  "Jim Nelson",
+			Email: "jim@jimnelson.us",
+		},
+	}
+	app.Copyright = "(c) 2018 Jim Nelson"
+	app.Usage = "Converts NBT-encoded data to JSON | https://github.com/midnightfreddie/nbt2json"
 	app.Flags = []cli.Flag{
 		cli.BoolFlag{
 			Name:  "reverse, json2nbt, r",
@@ -68,32 +77,32 @@ func main() {
 			if c.String("json-file") == "-" {
 				myJson, err = ioutil.ReadAll(os.Stdin)
 				if err != nil {
-					return err
+					return cli.NewExitError(err, 1)
 				}
 			} else {
 				f, err := os.Open(c.String("json-file"))
 				if err != nil {
-					return err
+					return cli.NewExitError(err, 1)
 				}
 				defer f.Close()
 				myJson, err = ioutil.ReadAll(f)
 				if err != nil {
-					return err
+					return cli.NewExitError(err, 1)
 				}
 			}
 			myNbt, err = nbt2json.Json2Nbt(myJson, byteOrder)
 			if err != nil {
-				return err
+				return cli.NewExitError(err, 1)
 			}
 			if c.String("nbt-file") == "-" {
 				err = binary.Write(os.Stdout, binary.LittleEndian, myNbt)
 				if err != nil {
-					return err
+					return cli.NewExitError(err, 1)
 				}
 			} else {
 				err = ioutil.WriteFile(c.String("nbt-file"), myNbt, 0644)
 				if err != nil {
-					return err
+					return cli.NewExitError(err, 1)
 				}
 			}
 		} else {
@@ -101,17 +110,17 @@ func main() {
 			if c.String("nbt-file") == "-" {
 				myNbt, err = ioutil.ReadAll(os.Stdin)
 				if err != nil {
-					return err
+					return cli.NewExitError(err, 1)
 				}
 			} else {
 				f, err := os.Open(c.String("nbt-file"))
 				if err != nil {
-					return err
+					return cli.NewExitError(err, 1)
 				}
 				defer f.Close()
 				myNbt, err = ioutil.ReadAll(f)
 				if err != nil {
-					return err
+					return cli.NewExitError(err, 1)
 				}
 			}
 
@@ -121,14 +130,14 @@ func main() {
 				buf := bytes.NewReader(myNbt)
 				zr, err := gzip.NewReader(buf)
 				if err != nil {
-					return err
+					return cli.NewExitError(err, 1)
 				}
 				uncompressed, err = ioutil.ReadAll(zr)
 				myNbt = uncompressed
 			}
 			out, err = nbt2json.Nbt2Json(myNbt[skipBytes:], byteOrder)
 			if err != nil {
-				return err
+				return cli.NewExitError(err, 1)
 			}
 			fmt.Println(string(out[:]))
 		}
