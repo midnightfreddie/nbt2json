@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"io"
 	"strconv"
+
+	"github.com/ghodss/yaml"
 )
 
 // JsonParseError is when the data does not match an expected pattern. Pass it message string and downstream error
@@ -21,6 +23,19 @@ func (e JsonParseError) Error() string {
 		s = fmt.Sprintf(": %s", e.e.Error())
 	}
 	return fmt.Sprintf("Error parsing json2nbt: %s%s", e.s, s)
+}
+
+// Yaml2Nbt converts JSON byte array to uncompressed NBT byte array
+func Yaml2Nbt(b []byte, byteOrder binary.ByteOrder) ([]byte, error) {
+	myJson, err := yaml.YAMLToJSON(b)
+	if err != nil {
+		return nil, err
+	}
+	nbtOut, err := Json2Nbt(myJson, byteOrder)
+	if err != nil {
+		return nbtOut, err
+	}
+	return nbtOut, nil
 }
 
 // Json2Nbt converts JSON byte array to uncompressed NBT byte array

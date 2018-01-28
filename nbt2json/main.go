@@ -94,9 +94,16 @@ func main() {
 					return cli.NewExitError(err, 1)
 				}
 			}
-			myNbt, err = nbt2json.Json2Nbt(myJson, byteOrder)
-			if err != nil {
-				return cli.NewExitError(err, 1)
+			if c.String("yaml") == "true" {
+				myNbt, err = nbt2json.Yaml2Nbt(myJson, byteOrder)
+				if err != nil {
+					return cli.NewExitError(err, 1)
+				}
+			} else {
+				myNbt, err = nbt2json.Json2Nbt(myJson, byteOrder)
+				if err != nil {
+					return cli.NewExitError(err, 1)
+				}
 			}
 			if c.String("nbt-file") == "-" {
 				err = binary.Write(os.Stdout, binary.LittleEndian, myNbt)
