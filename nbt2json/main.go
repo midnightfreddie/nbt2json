@@ -15,7 +15,7 @@ import (
 )
 
 func main() {
-	var inFile, outFile string
+	var inFile, outFile, comment string
 	var byteOrder binary.ByteOrder
 	var skipBytes int
 	app := cli.NewApp()
@@ -35,13 +35,18 @@ func main() {
 			Name:  "reverse, json2nbt, r",
 			Usage: "Convert JSON to NBT instead",
 		},
+		cli.StringFlag{
+			Name:        "comment, c",
+			Usage:       "Add `COMMENT` to json or yaml output, use quotes if contains white space",
+			Destination: &comment,
+		},
 		cli.BoolTFlag{
 			Name:  "little-endian, little, mcpe, l",
-			Usage: "Number format for Minecraft Pocket Edition and Windows 10 Edition (default)",
+			Usage: "For Minecraft Pocket Edition and Windows 10 Edition (default)",
 		},
 		cli.BoolFlag{
 			Name:  "big-endian, big, java, pc, b",
-			Usage: "Number format for PC/Java-based Minecraft and most other NBT tools",
+			Usage: "For PC/Java-based Minecraft and most other NBT tools",
 		},
 		cli.StringFlag{
 			Name:        "in, i",
@@ -116,12 +121,12 @@ func main() {
 				inData = uncompressed
 			}
 			if c.String("yaml") == "true" {
-				outData, err = nbt2json.Nbt2Yaml(inData[skipBytes:], byteOrder)
+				outData, err = nbt2json.Nbt2Yaml(inData[skipBytes:], byteOrder, comment)
 				if err != nil {
 					return cli.NewExitError(err, 1)
 				}
 			} else {
-				outData, err = nbt2json.Nbt2Json(inData[skipBytes:], byteOrder)
+				outData, err = nbt2json.Nbt2Json(inData[skipBytes:], byteOrder, comment)
 				if err != nil {
 					return cli.NewExitError(err, 1)
 				}

@@ -16,6 +16,7 @@ const Version = "0.2.0-alpha"
 // nbt2JsonUrl is inserted in the first tag as nbt2JsonUrl
 const nbt2JsonUrl = "https://github.com/midnightfreddie/nbt2json"
 
+// NbtJson is the top-level JSON document
 type NbtJson struct {
 	Version        string             `json:"version"`
 	Nbt2JsonUrl    string             `json:"nbt2JsonUrl"`
@@ -52,8 +53,8 @@ func (e NbtParseError) Error() string {
 }
 
 // Nbt2Yaml converts uncompressed NBT byte array to YAML byte array
-func Nbt2Yaml(b []byte, byteOrder binary.ByteOrder) ([]byte, error) {
-	jsonOut, err := Nbt2Json(b, byteOrder)
+func Nbt2Yaml(b []byte, byteOrder binary.ByteOrder, comment string) ([]byte, error) {
+	jsonOut, err := Nbt2Json(b, byteOrder, comment)
 	if err != nil {
 		return nil, err
 	}
@@ -65,11 +66,12 @@ func Nbt2Yaml(b []byte, byteOrder binary.ByteOrder) ([]byte, error) {
 }
 
 // Nbt2Json converts uncompressed NBT byte array to JSON byte array
-func Nbt2Json(b []byte, byteOrder binary.ByteOrder) ([]byte, error) {
+func Nbt2Json(b []byte, byteOrder binary.ByteOrder, comment string) ([]byte, error) {
 	var nbtJson NbtJson
 	nbtJson.Version = Version
 	nbtJson.Nbt2JsonUrl = nbt2JsonUrl
 	nbtJson.ConversionTime = time.Now().Format(time.RFC3339)
+	nbtJson.Comment = comment
 	buf := bytes.NewReader(b)
 	// var nbtJson.nbt []*json.RawMessage
 	for buf.Len() > 0 {
