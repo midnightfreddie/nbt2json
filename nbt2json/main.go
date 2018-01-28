@@ -141,11 +141,14 @@ func main() {
 			}
 			if c.String("yaml") == "true" {
 				out, err = nbt2json.Nbt2Yaml(myNbt[skipBytes:], byteOrder)
+				if err != nil {
+					return cli.NewExitError(err, 1)
+				}
 			} else {
 				out, err = nbt2json.Nbt2Json(myNbt[skipBytes:], byteOrder)
-			}
-			if err != nil {
-				return cli.NewExitError(err, 1)
+				if err != nil {
+					return cli.NewExitError(err, 1)
+				}
 			}
 			fmt.Println(string(out[:]))
 		}
