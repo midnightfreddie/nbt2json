@@ -5,6 +5,7 @@ import (
 	"encoding/binary"
 	"encoding/json"
 	"fmt"
+	"time"
 
 	"github.com/ghodss/yaml"
 )
@@ -15,16 +16,19 @@ const Version = "0.2.0-alpha"
 // nbt2JsonUrl is inserted in the first tag as nbt2JsonUrl
 const nbt2JsonUrl = "https://github.com/midnightfreddie/nbt2json"
 
-// To track whether a tag is first in the recursive getTag()
-var firstTag bool
+type NbtJson struct {
+	Version        string             `json:"version"`
+	Nbt2JsonUrl    string             `json:"nbt2JsonUrl"`
+	ConversionTime string             `json:"conversionTime,omitempty"`
+	Comment        string             `json:"comment,omitempty"`
+	Nbt            []*json.RawMessage `json:"nbt"`
+}
 
 // NbtTag represents one NBT tag for each struct
 type NbtTag struct {
-	Nbt2JsonVersion string      `json:"nbt2JsonVersion,omitempty"`
-	Nbt2JsonUrl     string      `json:"nbt2JsonUrl,omitempty"`
-	TagType         byte        `json:"tagType"`
-	Name            string      `json:"name"`
-	Value           interface{} `json:"value,omitempty"`
+	TagType byte        `json:"tagType"`
+	Name    string      `json:"name"`
+	Value   interface{} `json:"value,omitempty"`
 }
 
 // NbtTagList represents an NBT tag list
@@ -62,18 +66,21 @@ func Nbt2Yaml(b []byte, byteOrder binary.ByteOrder) ([]byte, error) {
 
 // Nbt2Json converts uncompressed NBT byte array to JSON byte array
 func Nbt2Json(b []byte, byteOrder binary.ByteOrder) ([]byte, error) {
-	firstTag = true
+	var nbtJson NbtJson
+	nbtJson.Version = Version
+	nbtJson.Nbt2JsonUrl = nbt2JsonUrl
+	nbtJson.ConversionTime = time.Now().Format(time.RFC3339)
 	buf := bytes.NewReader(b)
-	var jsonArray []*json.RawMessage
+	// var nbtJson.nbt []*json.RawMessage
 	for buf.Len() > 0 {
 		element, err := getTag(buf, byteOrder)
 		if err != nil {
 			return nil, err
 		}
 		myTemp := json.RawMessage(element)
-		jsonArray = append(jsonArray, &myTemp)
+		nbtJson.Nbt = append(nbtJson.Nbt, &myTemp)
 	}
-	jsonOut, err := json.MarshalIndent(jsonArray, "", "  ")
+	jsonOut, err := json.MarshalIndent(nbtJson, "", "  ")
 	if err != nil {
 		return nil, err
 	}
@@ -83,11 +90,6 @@ func Nbt2Json(b []byte, byteOrder binary.ByteOrder) ([]byte, error) {
 // getTag broken out form Nbt2Json to allow recursion with reader but public input is []byte
 func getTag(r *bytes.Reader, byteOrder binary.ByteOrder) ([]byte, error) {
 	var data NbtTag
-	if firstTag {
-		data.Nbt2JsonVersion = Version
-		data.Nbt2JsonUrl = nbt2JsonUrl
-		firstTag = false
-	}
 	err := binary.Read(r, byteOrder, &data.TagType)
 	if err != nil {
 		return nil, NbtParseError{"Reading TagType", err}
