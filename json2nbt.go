@@ -47,43 +47,21 @@ func Json2Nbt(b []byte, byteOrder binary.ByteOrder) ([]byte, error) {
 	var err error
 	err = json.Unmarshal(b, &nbtJsonData)
 	if err != nil {
-		// TODO: Clarify in error that this is converting the top-level document
-		panic(err)
-		// return nil, err
+		return nil, JsonParseError{"Error converting top-level document", err}
 	}
 	temp, err := json.Marshal(nbtJsonData.Nbt)
 	if err != nil {
-		// TODO: Clarify location in error
-		panic(err)
-		// return nil, err
+		return nil, JsonParseError{"Error marshalling nbt: json.RawMessage", err}
 	}
 	err = json.Unmarshal(temp, &nbtArray)
 	if err != nil {
-		// TODO: Clarify location in error
-		panic(err)
-		// return nil, err
+		return nil, JsonParseError{"Error unmarshalling nbt: value", err}
 	}
-	fmt.Println(nbtArray)
 	for _, nbtTag = range nbtArray {
-		// err = json.Unmarshal(nbtArray[i], &nbtTag)
-		// if err != nil {
-		// 	// TODO: Clarify location in error
-		// 	panic(err)
-		// 	// return nil, err
-		// }
-		// if jsonArray, ok := nbtArray[i].([]interface{}); ok {
-		// 	for _, jsonDatum := range jsonArray {
-		// 		err = writeTag(nbtOut, byteOrder, jsonDatum)
-		// 		if err != nil {
-		// 			return nil, err
-		// 		}
-		// 	}
-		// } else {
 		err = writeTag(nbtOut, byteOrder, nbtTag)
 		if err != nil {
 			return nil, err
 		}
-		// }
 	}
 
 	return nbtOut.Bytes(), nil
