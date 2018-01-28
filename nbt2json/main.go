@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"fmt"
 	"io/ioutil"
 	"os"
 	"time"
@@ -101,19 +100,7 @@ func main() {
 					return cli.NewExitError(err, 1)
 				}
 			}
-			if outFile == "-" {
-				err = binary.Write(os.Stdout, binary.LittleEndian, outData)
-				if err != nil {
-					return cli.NewExitError(err, 1)
-				}
-			} else {
-				err = ioutil.WriteFile(outFile, outData, 0644)
-				if err != nil {
-					return cli.NewExitError(err, 1)
-				}
-			}
 		} else {
-
 			// is it gzipped?
 			if (inData[0] == 0x1f) && (inData[1] == 0x8b) {
 				var uncompressed []byte
@@ -123,6 +110,9 @@ func main() {
 					return cli.NewExitError(err, 1)
 				}
 				uncompressed, err = ioutil.ReadAll(zr)
+				if err != nil {
+					return cli.NewExitError(err, 1)
+				}
 				inData = uncompressed
 			}
 			if c.String("yaml") == "true" {
@@ -136,13 +126,16 @@ func main() {
 					return cli.NewExitError(err, 1)
 				}
 			}
-			if outFile == "-" {
-				fmt.Println(string(outData[:]))
-			} else {
-				err = ioutil.WriteFile(outFile, outData, 0644)
-				if err != nil {
-					return cli.NewExitError(err, 1)
-				}
+		}
+		if outFile == "-" {
+			err = binary.Write(os.Stdout, binary.LittleEndian, outData)
+			if err != nil {
+				return cli.NewExitError(err, 1)
+			}
+		} else {
+			err = ioutil.WriteFile(outFile, outData, 0644)
+			if err != nil {
+				return cli.NewExitError(err, 1)
 			}
 		}
 		return nil
