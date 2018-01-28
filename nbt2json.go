@@ -10,14 +10,18 @@ import (
 	"github.com/ghodss/yaml"
 )
 
-// Version is inserted in the first tag as nbt2JsonVersion
-const Version = "0.2.0-alpha"
+// Name is the json document's name:
+const Name = "Named Binary Tag to JSON"
+
+// Version is the json document's nbt2JsonVersion:
+const Version = "0.2.0"
 
 // nbt2JsonUrl is inserted in the first tag as nbt2JsonUrl
 const nbt2JsonUrl = "https://github.com/midnightfreddie/nbt2json"
 
 // NbtJson is the top-level JSON document
 type NbtJson struct {
+	Name           string             `json:"name"`
 	Version        string             `json:"version"`
 	Nbt2JsonUrl    string             `json:"nbt2JsonUrl"`
 	ConversionTime string             `json:"conversionTime,omitempty"`
@@ -68,6 +72,7 @@ func Nbt2Yaml(b []byte, byteOrder binary.ByteOrder, comment string) ([]byte, err
 // Nbt2Json converts uncompressed NBT byte array to JSON byte array
 func Nbt2Json(b []byte, byteOrder binary.ByteOrder, comment string) ([]byte, error) {
 	var nbtJson NbtJson
+	nbtJson.Name = Name
 	nbtJson.Version = Version
 	nbtJson.Nbt2JsonUrl = nbt2JsonUrl
 	nbtJson.ConversionTime = time.Now().Format(time.RFC3339)
