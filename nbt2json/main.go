@@ -16,7 +16,7 @@ import (
 )
 
 func main() {
-	var nbtFile, jsonFile string
+	var inFile, outFile string
 	var byteOrder binary.ByteOrder
 	var skipBytes int
 	app := cli.NewApp()
@@ -48,13 +48,13 @@ func main() {
 			Name:        "in, i",
 			Value:       "-",
 			Usage:       "Input `FILE` path",
-			Destination: &nbtFile,
+			Destination: &inFile,
 		},
 		cli.StringFlag{
 			Name:        "out, o",
 			Value:       "-",
 			Usage:       "Output `FILE` path",
-			Destination: &jsonFile,
+			Destination: &outFile,
 		},
 		cli.BoolFlag{
 			Name:  "yaml, yml, y",
@@ -74,93 +74,72 @@ func main() {
 			byteOrder = binary.LittleEndian
 		}
 
-		var myNbt, myJson, outData []byte
+		var inData, outData []byte
 		var err error
 
+		if inFile == "-" {
+			inData, err = ioutil.ReadAll(os.Stdin)
+			if err != nil {
+				return cli.NewExitError(err, 1)
+			}
+		} else {
+			inData, err = ioutil.ReadFile(inFile)
+			if err != nil {
+				return cli.NewExitError(err, 1)
+			}
+		}
+
 		if c.String("reverse") == "true" {
-			if c.String("in") == "-" {
-				myJson, err = ioutil.ReadAll(os.Stdin)
-				if err != nil {
-					return cli.NewExitError(err, 1)
-				}
-			} else {
-				f, err := os.Open(c.String("in"))
-				if err != nil {
-					return cli.NewExitError(err, 1)
-				}
-				defer f.Close()
-				myJson, err = ioutil.ReadAll(f)
-				if err != nil {
-					return cli.NewExitError(err, 1)
-				}
-			}
 			if c.String("yaml") == "true" {
-				myNbt, err = nbt2json.Yaml2Nbt(myJson, byteOrder)
+				outData, err = nbt2json.Yaml2Nbt(inData, byteOrder)
 				if err != nil {
 					return cli.NewExitError(err, 1)
 				}
 			} else {
-				myNbt, err = nbt2json.Json2Nbt(myJson, byteOrder)
+				outData, err = nbt2json.Json2Nbt(inData, byteOrder)
 				if err != nil {
 					return cli.NewExitError(err, 1)
 				}
 			}
-			if c.String("out") == "-" {
-				err = binary.Write(os.Stdout, binary.LittleEndian, myNbt)
+			if outFile == "-" {
+				err = binary.Write(os.Stdout, binary.LittleEndian, outData)
 				if err != nil {
 					return cli.NewExitError(err, 1)
 				}
 			} else {
-				err = ioutil.WriteFile(c.String("out"), myNbt, 0644)
+				err = ioutil.WriteFile(outFile, outData, 0644)
 				if err != nil {
 					return cli.NewExitError(err, 1)
 				}
 			}
 		} else {
 
-			if c.String("in") == "-" {
-				myNbt, err = ioutil.ReadAll(os.Stdin)
-				if err != nil {
-					return cli.NewExitError(err, 1)
-				}
-			} else {
-				f, err := os.Open(c.String("in"))
-				if err != nil {
-					return cli.NewExitError(err, 1)
-				}
-				defer f.Close()
-				myNbt, err = ioutil.ReadAll(f)
-				if err != nil {
-					return cli.NewExitError(err, 1)
-				}
-			}
-
 			// is it gzipped?
-			if (myNbt[0] == 0x1f) && (myNbt[1] == 0x8b) {
+			if (inData[0] == 0x1f) && (inData[1] == 0x8b) {
 				var uncompressed []byte
-				buf := bytes.NewReader(myNbt)
+				buf := bytes.NewReader(inData)
 				zr, err := gzip.NewReader(buf)
 				if err != nil {
 					return cli.NewExitError(err, 1)
 				}
 				uncompressed, err = ioutil.ReadAll(zr)
-				myNbt = uncompressed
+				inData = uncompressed
 			}
 			if c.String("yaml") == "true" {
-				outData, err = nbt2json.Nbt2Yaml(myNbt[skipBytes:], byteOrder)
+				outData, err = nbt2json.Nbt2Yaml(inData[skipBytes:], byteOrder)
 				if err != nil {
 					return cli.NewExitError(err, 1)
 				}
 			} else {
-				outData, err = nbt2json.Nbt2Json(myNbt[skipBytes:], byteOrder)
+				outData, err = nbt2json.Nbt2Json(inData[skipBytes:], byteOrder)
 				if err != nil {
 					return cli.NewExitError(err, 1)
 				}
 			}
-			if c.String("out") == "-" {
+			if outFile == "-" {
 				fmt.Println(string(outData[:]))
 			} else {
-				err = ioutil.WriteFile(c.String("out"), outData, 0644)
+				err = ioutil.WriteFile(outFile, outData, 0644)
 				if err != nil {
 					return cli.NewExitError(err, 1)
 				}
