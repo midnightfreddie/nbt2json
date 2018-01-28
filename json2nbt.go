@@ -50,7 +50,13 @@ func Json2Nbt(b []byte, byteOrder binary.ByteOrder) ([]byte, error) {
 		panic(err)
 		// return nil, err
 	}
-	jsonData, err = json.Marshal(nbtJsonData.Nbt)
+	temp, err := json.Marshal(nbtJsonData.Nbt)
+	if err != nil {
+		// TODO: Clarify location in error
+		panic(err)
+		// return nil, err
+	}
+	err = json.Unmarshal(temp, &jsonData)
 	if err != nil {
 		// TODO: Clarify in error that this is converting the nbt array
 		panic(err)
