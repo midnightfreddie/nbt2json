@@ -100,11 +100,7 @@ func writeTag(w io.Writer, byteOrder binary.ByteOrder, myMap interface{}) error 
 			return JsonParseError{"tagType is not numeric", err}
 		}
 	} else {
-		// This caused a panic
-		// return JsonParseError{"writeTag: myMap is not map[string]interface{}; is " + reflect.TypeOf(myMap).String(), err}
-		// This said myMap was nil ... it may be right
-		return JsonParseError{"writeTag: myMap is not map[string]interface{}; is " + fmt.Sprintf("%T", myMap), err}
-		// return JsonParseError{"writeTag: myMap is not map[string]interface{}", err}
+		return JsonParseError{"writeTag: myMap is not map[string]interface{}", err}
 	}
 	return err
 }
