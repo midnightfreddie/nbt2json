@@ -42,7 +42,8 @@ func Yaml2Nbt(b []byte, byteOrder binary.ByteOrder) ([]byte, error) {
 func Json2Nbt(b []byte, byteOrder binary.ByteOrder) ([]byte, error) {
 	nbtOut := new(bytes.Buffer)
 	var nbtJsonData NbtJson
-	var jsonData interface{}
+	var nbtTag interface{}
+	var nbtArray []interface{}
 	var err error
 	err = json.Unmarshal(b, &nbtJsonData)
 	if err != nil {
@@ -56,24 +57,33 @@ func Json2Nbt(b []byte, byteOrder binary.ByteOrder) ([]byte, error) {
 		panic(err)
 		// return nil, err
 	}
-	err = json.Unmarshal(temp, &jsonData)
+	err = json.Unmarshal(temp, &nbtArray)
 	if err != nil {
-		// TODO: Clarify in error that this is converting the nbt array
+		// TODO: Clarify location in error
 		panic(err)
 		// return nil, err
 	}
-	if jsonArray, ok := jsonData.([]interface{}); ok {
-		for jsonDatum := range jsonArray {
-			err = writeTag(nbtOut, byteOrder, jsonDatum)
-			if err != nil {
-				return nil, err
-			}
-		}
-	} else {
-		err = writeTag(nbtOut, byteOrder, jsonData)
+	fmt.Println(nbtArray)
+	for _, nbtTag = range nbtArray {
+		// err = json.Unmarshal(nbtArray[i], &nbtTag)
+		// if err != nil {
+		// 	// TODO: Clarify location in error
+		// 	panic(err)
+		// 	// return nil, err
+		// }
+		// if jsonArray, ok := nbtArray[i].([]interface{}); ok {
+		// 	for _, jsonDatum := range jsonArray {
+		// 		err = writeTag(nbtOut, byteOrder, jsonDatum)
+		// 		if err != nil {
+		// 			return nil, err
+		// 		}
+		// 	}
+		// } else {
+		err = writeTag(nbtOut, byteOrder, nbtTag)
 		if err != nil {
 			return nil, err
 		}
+		// }
 	}
 
 	return nbtOut.Bytes(), nil
@@ -112,7 +122,11 @@ func writeTag(w io.Writer, byteOrder binary.ByteOrder, myMap interface{}) error 
 			return JsonParseError{"tagType is not numeric", err}
 		}
 	} else {
-		return JsonParseError{"writeTag: myMap is not map[string]interface{}", err}
+		// This caused a panic
+		// return JsonParseError{"writeTag: myMap is not map[string]interface{}; is " + reflect.TypeOf(myMap).String(), err}
+		// This said myMap was nil ... it may be right
+		return JsonParseError{"writeTag: myMap is not map[string]interface{}; is " + fmt.Sprintf("%T", myMap), err}
+		// return JsonParseError{"writeTag: myMap is not map[string]interface{}", err}
 	}
 	return err
 }
