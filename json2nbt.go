@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"io"
 	"strconv"
+
+	"github.com/ghodss/yaml"
 )
 
 // JsonParseError is when the data does not match an expected pattern. Pass it message string and downstream error
@@ -23,18 +25,43 @@ func (e JsonParseError) Error() string {
 	return fmt.Sprintf("Error parsing json2nbt: %s%s", e.s, s)
 }
 
+// Yaml2Nbt converts JSON byte array to uncompressed NBT byte array
+func Yaml2Nbt(b []byte, byteOrder binary.ByteOrder) ([]byte, error) {
+	myJson, err := yaml.YAMLToJSON(b)
+	if err != nil {
+		return nil, JsonParseError{"Error converting YAML to JSON", err}
+	}
+	nbtOut, err := Json2Nbt(myJson, byteOrder)
+	if err != nil {
+		return nbtOut, err
+	}
+	return nbtOut, nil
+}
+
 // Json2Nbt converts JSON byte array to uncompressed NBT byte array
 func Json2Nbt(b []byte, byteOrder binary.ByteOrder) ([]byte, error) {
 	nbtOut := new(bytes.Buffer)
-	var jsonData interface{}
+	var nbtJsonData NbtJson
+	var nbtTag interface{}
+	var nbtArray []interface{}
 	var err error
-	err = json.Unmarshal(b, &jsonData)
+	err = json.Unmarshal(b, &nbtJsonData)
 	if err != nil {
-		return nil, err
+		return nil, JsonParseError{"Error parsing JSON input. Is input JSON-formatted?", err}
 	}
-	err = writeTag(nbtOut, byteOrder, jsonData)
+	temp, err := json.Marshal(nbtJsonData.Nbt)
 	if err != nil {
-		return nil, err
+		return nil, JsonParseError{"Error marshalling nbt: json.RawMessage", err}
+	}
+	err = json.Unmarshal(temp, &nbtArray)
+	if err != nil {
+		return nil, JsonParseError{"Error unmarshalling nbt: value", err}
+	}
+	for _, nbtTag = range nbtArray {
+		err = writeTag(nbtOut, byteOrder, nbtTag)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return nbtOut.Bytes(), nil

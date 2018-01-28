@@ -5,7 +5,29 @@ import (
 	"encoding/binary"
 	"encoding/json"
 	"fmt"
+	"time"
+
+	"github.com/ghodss/yaml"
 )
+
+// Name is the json document's name:
+const Name = "Named Binary Tag to JSON"
+
+// Version is the json document's nbt2JsonVersion:
+const Version = "0.2.0"
+
+// nbt2JsonUrl is inserted in the first tag as nbt2JsonUrl
+const nbt2JsonUrl = "https://github.com/midnightfreddie/nbt2json"
+
+// NbtJson is the top-level JSON document
+type NbtJson struct {
+	Name           string             `json:"name"`
+	Version        string             `json:"version"`
+	Nbt2JsonUrl    string             `json:"nbt2JsonUrl"`
+	ConversionTime string             `json:"conversionTime,omitempty"`
+	Comment        string             `json:"comment,omitempty"`
+	Nbt            []*json.RawMessage `json:"nbt"`
+}
 
 // NbtTag represents one NBT tag for each struct
 type NbtTag struct {
@@ -34,10 +56,38 @@ func (e NbtParseError) Error() string {
 	return fmt.Sprintf("Error parsing NBT: %s%s", e.s, s)
 }
 
+// Nbt2Yaml converts uncompressed NBT byte array to YAML byte array
+func Nbt2Yaml(b []byte, byteOrder binary.ByteOrder, comment string) ([]byte, error) {
+	jsonOut, err := Nbt2Json(b, byteOrder, comment)
+	if err != nil {
+		return nil, err
+	}
+	yamlOut, err := yaml.JSONToYAML(jsonOut)
+	if err != nil {
+		return yamlOut, NbtParseError{"Error converting JSON to YAML. Oops. JSON conversion succeeded, so please report this error and use JSON instead.", err}
+	}
+	return yamlOut, nil
+}
+
 // Nbt2Json converts uncompressed NBT byte array to JSON byte array
-func Nbt2Json(b []byte, byteOrder binary.ByteOrder) ([]byte, error) {
+func Nbt2Json(b []byte, byteOrder binary.ByteOrder, comment string) ([]byte, error) {
+	var nbtJson NbtJson
+	nbtJson.Name = Name
+	nbtJson.Version = Version
+	nbtJson.Nbt2JsonUrl = nbt2JsonUrl
+	nbtJson.ConversionTime = time.Now().Format(time.RFC3339)
+	nbtJson.Comment = comment
 	buf := bytes.NewReader(b)
-	jsonOut, err := getTag(buf, byteOrder)
+	// var nbtJson.nbt []*json.RawMessage
+	for buf.Len() > 0 {
+		element, err := getTag(buf, byteOrder)
+		if err != nil {
+			return nil, err
+		}
+		myTemp := json.RawMessage(element)
+		nbtJson.Nbt = append(nbtJson.Nbt, &myTemp)
+	}
+	jsonOut, err := json.MarshalIndent(nbtJson, "", "  ")
 	if err != nil {
 		return nil, err
 	}
