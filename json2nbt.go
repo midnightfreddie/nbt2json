@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"math"
 	"strconv"
 
 	"github.com/ghodss/yaml"
@@ -161,7 +162,13 @@ func writePayload(w io.Writer, byteOrder binary.ByteOrder, m map[string]interfac
 				return JsonParseError{"Error writing float64 payload", err}
 			}
 		} else {
-			return JsonParseError{"Tag Byte value field not a number", err}
+			// return JsonParseError{"Tag Byte value field not a number", err}
+			f = math.NaN()
+			err = binary.Write(w, byteOrder, f)
+			if err != nil {
+				return JsonParseError{"Error writing float64 payload", err}
+			}
+
 		}
 	case 7:
 		if values, ok := m["value"].([]interface{}); ok {
@@ -260,6 +267,25 @@ func writePayload(w io.Writer, byteOrder binary.ByteOrder, m map[string]interfac
 					err = binary.Write(w, byteOrder, int32(i))
 					if err != nil {
 						return JsonParseError{"Error writing element of int32 array", err}
+					}
+				} else {
+					return JsonParseError{"Tag Int value field not a number", err}
+				}
+			}
+		} else {
+			return JsonParseError{"Tag Int Array value field not an array", err}
+		}
+	case 12:
+		if values, ok := m["value"].([]interface{}); ok {
+			err = binary.Write(w, byteOrder, int64(len(values)))
+			if err != nil {
+				return JsonParseError{"Error writing int64 array length", err}
+			}
+			for _, value := range values {
+				if i, ok := value.(float64); ok {
+					err = binary.Write(w, byteOrder, int64(i))
+					if err != nil {
+						return JsonParseError{"Error writing element of int64 array", err}
 					}
 				} else {
 					return JsonParseError{"Tag Int value field not a number", err}

@@ -5,6 +5,7 @@ import (
 	"encoding/binary"
 	"encoding/json"
 	"fmt"
+	"math"
 	"time"
 
 	"github.com/ghodss/yaml"
@@ -121,7 +122,7 @@ func getTag(r *bytes.Reader, byteOrder binary.ByteOrder) ([]byte, error) {
 		return nil, err
 	}
 	outJson, err := json.MarshalIndent(data, "", "  ")
-	return outJson, nil
+	return outJson, err
 }
 
 // Gets the tag payload. Had to break this out from the main function to allow tag list recursion
@@ -172,7 +173,11 @@ func getPayload(r *bytes.Reader, byteOrder binary.ByteOrder, tagType byte) (inte
 		if err != nil {
 			return nil, NbtParseError{"Reading float64", err}
 		}
-		output = f
+		if math.IsNaN(f) {
+			output = "NaN"
+		} else {
+			output = f
+		}
 	case 7:
 		var byteArray []int8
 		var oneByte int8
@@ -253,6 +258,21 @@ func getPayload(r *bytes.Reader, byteOrder binary.ByteOrder, tagType byte) (inte
 			intArray = append(intArray, oneInt)
 		}
 		output = intArray
+	case 12:
+		var longArray []int64
+		var numRecords, oneInt int64
+		err := binary.Read(r, byteOrder, &numRecords)
+		if err != nil {
+			return nil, NbtParseError{"Reading long array tag length", err}
+		}
+		for i := int64(1); i <= numRecords; i++ {
+			err := binary.Read(r, byteOrder, &oneInt)
+			if err != nil {
+				return nil, NbtParseError{"Reading long in long array tag", err}
+			}
+			longArray = append(longArray, oneInt)
+		}
+		output = longArray
 	default:
 		return nil, NbtParseError{"TagType not recognized", nil}
 	}
