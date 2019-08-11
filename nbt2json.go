@@ -15,7 +15,7 @@ import (
 const Name = "Named Binary Tag to JSON"
 
 // Version is the json document's nbt2JsonVersion:
-const Version = "0.2.0"
+const Version = "0.3.0"
 
 // nbt2JsonUrl is inserted in the first tag as nbt2JsonUrl
 const nbt2JsonUrl = "https://github.com/midnightfreddie/nbt2json"
