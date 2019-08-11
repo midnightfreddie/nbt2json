@@ -121,7 +121,7 @@ func getTag(r *bytes.Reader, byteOrder binary.ByteOrder) ([]byte, error) {
 		return nil, err
 	}
 	outJson, err := json.MarshalIndent(data, "", "  ")
-	return outJson, nil
+	return outJson, err
 }
 
 // Gets the tag payload. Had to break this out from the main function to allow tag list recursion
