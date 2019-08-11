@@ -253,6 +253,21 @@ func getPayload(r *bytes.Reader, byteOrder binary.ByteOrder, tagType byte) (inte
 			intArray = append(intArray, oneInt)
 		}
 		output = intArray
+	case 12:
+		var longArray []int64
+		var numRecords, oneInt int64
+		err := binary.Read(r, byteOrder, &numRecords)
+		if err != nil {
+			return nil, NbtParseError{"Reading long array tag length", err}
+		}
+		for i := int64(1); i <= numRecords; i++ {
+			err := binary.Read(r, byteOrder, &oneInt)
+			if err != nil {
+				return nil, NbtParseError{"Reading long in long array tag", err}
+			}
+			longArray = append(longArray, oneInt)
+		}
+		output = longArray
 	default:
 		return nil, NbtParseError{"TagType not recognized", nil}
 	}

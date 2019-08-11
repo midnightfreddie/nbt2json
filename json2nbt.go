@@ -268,6 +268,25 @@ func writePayload(w io.Writer, byteOrder binary.ByteOrder, m map[string]interfac
 		} else {
 			return JsonParseError{"Tag Int Array value field not an array", err}
 		}
+	case 12:
+		if values, ok := m["value"].([]interface{}); ok {
+			err = binary.Write(w, byteOrder, int64(len(values)))
+			if err != nil {
+				return JsonParseError{"Error writing int64 array length", err}
+			}
+			for _, value := range values {
+				if i, ok := value.(float64); ok {
+					err = binary.Write(w, byteOrder, int64(i))
+					if err != nil {
+						return JsonParseError{"Error writing element of int64 array", err}
+					}
+				} else {
+					return JsonParseError{"Tag Int value field not a number", err}
+				}
+			}
+		} else {
+			return JsonParseError{"Tag Int Array value field not an array", err}
+		}
 	default:
 		return JsonParseError{"tagType " + strconv.Itoa(int(tagType)) + " is not recognized", err}
 	}
