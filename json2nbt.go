@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"math"
 	"strconv"
 
 	"github.com/ghodss/yaml"
@@ -161,7 +162,13 @@ func writePayload(w io.Writer, byteOrder binary.ByteOrder, m map[string]interfac
 				return JsonParseError{"Error writing float64 payload", err}
 			}
 		} else {
-			return JsonParseError{"Tag Byte value field not a number", err}
+			// return JsonParseError{"Tag Byte value field not a number", err}
+			f = math.NaN()
+			err = binary.Write(w, byteOrder, f)
+			if err != nil {
+				return JsonParseError{"Error writing float64 payload", err}
+			}
+
 		}
 	case 7:
 		if values, ok := m["value"].([]interface{}); ok {

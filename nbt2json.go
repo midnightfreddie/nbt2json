@@ -5,6 +5,7 @@ import (
 	"encoding/binary"
 	"encoding/json"
 	"fmt"
+	"math"
 	"time"
 
 	"github.com/ghodss/yaml"
@@ -172,7 +173,11 @@ func getPayload(r *bytes.Reader, byteOrder binary.ByteOrder, tagType byte) (inte
 		if err != nil {
 			return nil, NbtParseError{"Reading float64", err}
 		}
-		output = f
+		if math.IsNaN(f) {
+			output = "NaN"
+		} else {
+			output = f
+		}
 	case 7:
 		var byteArray []int8
 		var oneByte int8
