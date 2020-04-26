@@ -20,7 +20,7 @@ func main() {
 	var skipBytes int
 	app := cli.NewApp()
 	app.Name = "NBT to JSON"
-	app.Version = "0.3.0"
+	app.Version = "0.3.1"
 	app.Compiled = time.Now()
 	app.Authors = []cli.Author{
 		cli.Author{
