@@ -46,7 +46,10 @@ func Json2Nbt(b []byte, byteOrder binary.ByteOrder) ([]byte, error) {
 	var nbtTag interface{}
 	var nbtArray []interface{}
 	var err error
-	err = json.Unmarshal(b, &nbtJsonData)
+	d := json.NewDecoder(bytes.NewBuffer(b))
+	d.UseNumber()
+
+	err = d.Decode(&nbtJsonData)
 	if err != nil {
 		return nil, JsonParseError{"Error parsing JSON input. Is input JSON-formatted?", err}
 	}
@@ -54,7 +57,10 @@ func Json2Nbt(b []byte, byteOrder binary.ByteOrder) ([]byte, error) {
 	if err != nil {
 		return nil, JsonParseError{"Error marshalling nbt: json.RawMessage", err}
 	}
-	err = json.Unmarshal(temp, &nbtArray)
+	d2 := json.NewDecoder(bytes.NewBuffer(temp))
+	d2.UseNumber()
+	err = d2.Decode(&nbtArray)
+
 	if err != nil {
 		return nil, JsonParseError{"Error unmarshalling nbt: value", err}
 	}
@@ -71,7 +77,7 @@ func Json2Nbt(b []byte, byteOrder binary.ByteOrder) ([]byte, error) {
 func writeTag(w io.Writer, byteOrder binary.ByteOrder, myMap interface{}) error {
 	var err error
 	if m, ok := myMap.(map[string]interface{}); ok {
-		if tagType, ok := m["tagType"].(float64); ok {
+		if tagType, err := m["tagType"].(json.Number).Int64(); err == nil {
 			if tagType == 0 {
 				// not expecting a 0 tag, but if it occurs just ignore it
 				return nil
@@ -106,12 +112,12 @@ func writeTag(w io.Writer, byteOrder binary.ByteOrder, myMap interface{}) error 
 	return err
 }
 
-func writePayload(w io.Writer, byteOrder binary.ByteOrder, m map[string]interface{}, tagType float64) error {
+func writePayload(w io.Writer, byteOrder binary.ByteOrder, m map[string]interface{}, tagType int64) error {
 	var err error
 
-	switch int(tagType) {
+	switch tagType {
 	case 1:
-		if i, ok := m["value"].(float64); ok {
+		if i, err := m["value"].(json.Number).Int64(); err == nil {
 			err = binary.Write(w, byteOrder, int8(i))
 			if err != nil {
 				return JsonParseError{"Error writing byte payload", err}
@@ -120,7 +126,7 @@ func writePayload(w io.Writer, byteOrder binary.ByteOrder, m map[string]interfac
 			return JsonParseError{"Tag Byte value field not a number", err}
 		}
 	case 2:
-		if i, ok := m["value"].(float64); ok {
+		if i, err := m["value"].(json.Number).Int64(); err == nil {
 			err = binary.Write(w, byteOrder, int16(i))
 			if err != nil {
 				return JsonParseError{"Error writing short payload", err}
@@ -129,7 +135,7 @@ func writePayload(w io.Writer, byteOrder binary.ByteOrder, m map[string]interfac
 			return JsonParseError{"Tag Byte value field not a number", err}
 		}
 	case 3:
-		if i, ok := m["value"].(float64); ok {
+		if i, err := m["value"].(json.Number).Int64(); err == nil {
 			err = binary.Write(w, byteOrder, int32(i))
 			if err != nil {
 				return JsonParseError{"Error writing int32 payload", err}
@@ -138,7 +144,7 @@ func writePayload(w io.Writer, byteOrder binary.ByteOrder, m map[string]interfac
 			return JsonParseError{"Tag Byte value field not a number", err}
 		}
 	case 4:
-		if i, ok := m["value"].(float64); ok {
+		if i, err := m["value"].(json.Number).Int64(); err == nil {
 			err = binary.Write(w, byteOrder, int64(i))
 			if err != nil {
 				return JsonParseError{"Error writing int64 payload", err}
@@ -147,7 +153,7 @@ func writePayload(w io.Writer, byteOrder binary.ByteOrder, m map[string]interfac
 			return JsonParseError{"Tag Byte value field not a number", err}
 		}
 	case 5:
-		if f, ok := m["value"].(float64); ok {
+		if f, err := m["value"].(json.Number).Float64(); err == nil {
 			err = binary.Write(w, byteOrder, float32(f))
 			if err != nil {
 				return JsonParseError{"Error writing float32 payload", err}
@@ -156,12 +162,12 @@ func writePayload(w io.Writer, byteOrder binary.ByteOrder, m map[string]interfac
 			return JsonParseError{"Tag Byte value field not a number", err}
 		}
 	case 6:
-		if f, ok := m["value"].(float64); ok {
+		if f, err := m["value"].(json.Number).Float64(); err == nil {
 			err = binary.Write(w, byteOrder, f)
 			if err != nil {
 				return JsonParseError{"Error writing float64 payload", err}
 			}
-		} else {
+		} else {// TODO: not tested with json.Number
 			// return JsonParseError{"Tag Byte value field not a number", err}
 			f = math.NaN()
 			err = binary.Write(w, byteOrder, f)
@@ -177,7 +183,7 @@ func writePayload(w io.Writer, byteOrder binary.ByteOrder, m map[string]interfac
 				return JsonParseError{"Error writing byte array length", err}
 			}
 			for _, value := range values {
-				if i, ok := value.(float64); ok {
+				if i, err := value.(json.Number).Int64(); err == nil {
 					err = binary.Write(w, byteOrder, int8(i))
 					if err != nil {
 						return JsonParseError{"Error writing element of byte array", err}
@@ -205,9 +211,9 @@ func writePayload(w io.Writer, byteOrder binary.ByteOrder, m map[string]interfac
 	case 9:
 		// important: tagListType needs to be in scope to be passed to writePayload
 		// := were keeping it in a lower scope and zeroing it out.
-		var tagListType float64
+		var tagListType int64
 		if listMap, ok := m["value"].(map[string]interface{}); ok {
-			if tagListType, ok = listMap["tagListType"].(float64); ok {
+			if tagListType, err = listMap["tagListType"].(json.Number).Int64(); err == nil {
 				err = binary.Write(w, byteOrder, byte(tagListType))
 				if err != nil {
 					return JsonParseError{"While writing tag list type", err}
@@ -263,7 +269,7 @@ func writePayload(w io.Writer, byteOrder binary.ByteOrder, m map[string]interfac
 				return JsonParseError{"Error writing int32 array length", err}
 			}
 			for _, value := range values {
-				if i, ok := value.(float64); ok {
+				if i, err := value.(json.Number).Int64(); err == nil {
 					err = binary.Write(w, byteOrder, int32(i))
 					if err != nil {
 						return JsonParseError{"Error writing element of int32 array", err}
@@ -282,7 +288,7 @@ func writePayload(w io.Writer, byteOrder binary.ByteOrder, m map[string]interfac
 				return JsonParseError{"Error writing int64 array length", err}
 			}
 			for _, value := range values {
-				if i, ok := value.(float64); ok {
+				if i, err := value.(json.Number).Int64(); err == nil {
 					err = binary.Write(w, byteOrder, int64(i))
 					if err != nil {
 						return JsonParseError{"Error writing element of int64 array", err}
