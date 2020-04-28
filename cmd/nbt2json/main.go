@@ -46,11 +46,11 @@ func main() {
 		},
 		cli.BoolTFlag{
 			Name:  "little-endian, little, mcpe, l",
-			Usage: "For Minecraft Pocket Edition and Windows 10 Edition (default)",
+			Usage: "For Minecraft Bedrock Edition (Pocket and Windows 10) (default)",
 		},
 		cli.BoolFlag{
 			Name:  "big-endian, big, java, pc, b",
-			Usage: "For PC/Java-based Minecraft and most other NBT tools",
+			Usage: "For Minecraft Java Edition (like most other NBT tools)",
 		},
 		cli.StringFlag{
 			Name:        "in, i",
@@ -71,7 +71,7 @@ func main() {
 		cli.IntFlag{
 			Name:        "skip",
 			Value:       0,
-			Usage:       "Skip `NUM` bytes of NBT input. For MCPE level.dat, use --skip 8 to bypass header",
+			Usage:       "Skip `NUM` bytes of NBT input. For Bedrock's level.dat, use --skip 8 to bypass header",
 			Destination: &skipBytes,
 		},
 	}
