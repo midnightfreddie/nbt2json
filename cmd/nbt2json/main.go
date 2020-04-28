@@ -28,12 +28,16 @@ func main() {
 			Email: "jim@jimnelson.us",
 		},
 	}
-	app.Copyright = "(c) 2018, 2019 Jim Nelson"
+	app.Copyright = "(c) 2018, 2019, 2020 Jim Nelson"
 	app.Usage = "Converts NBT-encoded data to JSON | https://github.com/midnightfreddie/nbt2json"
 	app.Flags = []cli.Flag{
 		cli.BoolFlag{
 			Name:  "reverse, json2nbt, r",
 			Usage: "Convert JSON to NBT instead",
+		},
+		cli.BoolFlag{
+			Name:  "gzip, z",
+			Usage: "Compress output with gzip",
 		},
 		cli.StringFlag{
 			Name:        "comment, c",
@@ -131,6 +135,19 @@ func main() {
 					return cli.NewExitError(err, 1)
 				}
 			}
+		}
+		if c.String("gzip") == "true" {
+			var buf bytes.Buffer
+			zw := gzip.NewWriter(&buf)
+			_, err := zw.Write(outData)
+			if err != nil {
+				return cli.NewExitError(err, 1)
+			}
+			err = zw.Close()
+			if err != nil {
+				return cli.NewExitError(err, 1)
+			}
+			outData = buf.Bytes()
 		}
 		if outFile == "-" {
 			err = binary.Write(os.Stdout, binary.LittleEndian, outData)
