@@ -242,7 +242,12 @@ func getPayload(r *bytes.Reader, byteOrder binary.ByteOrder, tagType byte) (inte
 			}
 			compound = append(compound, json.RawMessage(string(tag)))
 		}
-		output = compound
+		if compound == nil {
+			// Explicitly give empty array else value will be null instead of []
+			output = []int{}
+		} else {
+			output = compound
+		}
 	case 11:
 		var intArray []int32
 		var numRecords, oneInt int32
