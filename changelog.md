@@ -2,6 +2,7 @@
 
 - Fixed emtpy array showing as `null` in json instead of `[]` for compound tag 10
 - Moved nbt2json/ main executable to cmd/nbt2json/
+- Added `--gzip` / `-z` option to executable to compress output
 
 There does not seem to be a missing data type, but users are reporting UUIDs
 are not preserving due to float interpretation of json numbers.
