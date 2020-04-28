@@ -17,6 +17,12 @@ const Name = "Named Binary Tag to JSON"
 // Version is the json document's nbt2JsonVersion:
 const Version = "0.3.3"
 
+// Bedrock is for Bedrock Edition (little endian NBT encoding); unable use make const, but **do not alter**
+var Bedrock = binary.LittleEndian
+
+// Java is for Java Edition (big endian NBT encoding); unable use make const, but **do not alter**
+var Java = binary.BigEndian
+
 // nbt2JsonUrl is inserted in the first tag as nbt2JsonUrl
 const nbt2JsonUrl = "https://github.com/midnightfreddie/nbt2json"
 

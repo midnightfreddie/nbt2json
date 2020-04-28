@@ -6,10 +6,10 @@ A command line utility and module that reads NBT data and converts it to JSON or
 
 - nbt2json executable will auto-detect and decompress gzipped files
 - nbt2json executable has option to gzip output
-- Can read both Minecraft Bedrock Edition and Java Edition NBT data
-    - Does not auto-detect which
-    - nbt2json executable defaults to MCPE / little endian
-- Can import to other Go projects `import "github.com/midnightfreddie/nbt2json"`
+- Can read and write both Minecraft Bedrock Edition and Java Edition NBT data
+    - Does **not** auto-detect which
+    - nbt2json executable defaults to Bedrock Edition / little endian
+- Can import to other Go projects
 - Can use either JSON or YAML
 - Can include comment in JSON/YAML output (which is ignored when converting back to NBT)
 
@@ -71,8 +71,8 @@ There are some Go options I could adapt for little endian, but I'll have to do e
 
 ### Exported Go Functions
 
-- Client code needs to `import "encoding/binary"` in addition to `import "github.com/midnightfreddie/nbt2json"`
-- For `byteOrder` parameters, pass `binary.LittleEndian` for Bedrock Edition or `binary.BigEndian` for Java Edition
+- Client code needs to `import "github.com/midnightfreddie/nbt2json"`
+- For `byteOrder` parameters, pass `nbt2json.Bedrock` (alias for `binary.LittleEndian`) for Bedrock Edition or `nbt2json.Java` (alias for `binary.BigEndian`) for Java Edition
 - The functions use byte arrays where you might expect strings. Convert as such: `var myString = someByteArray[:]` or `var myByteArray = []byte(someStringValue)`
 - All errors should bubble up through the error part of the result and should describe where the problem was
 - Nbt2Yaml converts uncompressed NBT byte array to YAML byte array

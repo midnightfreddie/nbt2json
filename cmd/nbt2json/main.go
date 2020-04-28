@@ -77,9 +77,9 @@ func main() {
 	}
 	app.Action = func(c *cli.Context) error {
 		if c.String("big-endian") == "true" {
-			byteOrder = binary.BigEndian
+			byteOrder = nbt2json.Java
 		} else {
-			byteOrder = binary.LittleEndian
+			byteOrder = nbt2json.Bedrock
 		}
 
 		var inData, outData []byte
@@ -150,6 +150,7 @@ func main() {
 			outData = buf.Bytes()
 		}
 		if outFile == "-" {
+			// TODO: Should this be binary.LittleEndian or byteOrder?
 			err = binary.Write(os.Stdout, binary.LittleEndian, outData)
 			if err != nil {
 				return cli.NewExitError(err, 1)
