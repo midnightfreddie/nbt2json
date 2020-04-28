@@ -4,29 +4,13 @@ import (
 	"bytes"
 	"encoding/binary"
 	"encoding/json"
-	"fmt"
 	"math"
 	"time"
 
 	"github.com/ghodss/yaml"
 )
 
-// Name is the json document's name:
-const Name = "Named Binary Tag to JSON"
-
-// Version is the json document's nbt2JsonVersion:
-const Version = "0.3.3"
-
-// Bedrock is for Bedrock Edition (little endian NBT encoding); unable use make const, but **do not alter**
-var Bedrock = binary.LittleEndian
-
-// Java is for Java Edition (big endian NBT encoding); unable use make const, but **do not alter**
-var Java = binary.BigEndian
-
-// nbt2JsonUrl is inserted in the first tag as nbt2JsonUrl
-const nbt2JsonUrl = "https://github.com/midnightfreddie/nbt2json"
-
-// NbtJson is the top-level JSON document
+// NbtJson is the top-level JSON document; it is exported for reflect, and client code shouldn't use it
 type NbtJson struct {
 	Name           string             `json:"name"`
 	Version        string             `json:"version"`
@@ -36,31 +20,17 @@ type NbtJson struct {
 	Nbt            []*json.RawMessage `json:"nbt"`
 }
 
-// NbtTag represents one NBT tag for each struct
+// NbtTag represents one NBT tag for each struct; it is exported for reflect, and client code shouldn't use it
 type NbtTag struct {
 	TagType byte        `json:"tagType"`
 	Name    string      `json:"name"`
 	Value   interface{} `json:"value,omitempty"`
 }
 
-// NbtTagList represents an NBT tag list
+// NbtTagList represents an NBT tag list; it is exported for reflect, and client code shouldn't use it
 type NbtTagList struct {
 	TagListType byte          `json:"tagListType"`
 	List        []interface{} `json:"list"`
-}
-
-// NbtParseError is when the data does not match an expected pattern. Pass it message string and downstream error
-type NbtParseError struct {
-	s string
-	e error
-}
-
-func (e NbtParseError) Error() string {
-	var s string
-	if e.e != nil {
-		s = fmt.Sprintf(": %s", e.e.Error())
-	}
-	return fmt.Sprintf("Error parsing NBT: %s%s", e.s, s)
 }
 
 // Nbt2Yaml converts uncompressed NBT byte array to YAML byte array
@@ -81,7 +51,7 @@ func Nbt2Json(b []byte, byteOrder binary.ByteOrder, comment string) ([]byte, err
 	var nbtJson NbtJson
 	nbtJson.Name = Name
 	nbtJson.Version = Version
-	nbtJson.Nbt2JsonUrl = nbt2JsonUrl
+	nbtJson.Nbt2JsonUrl = Nbt2JsonUrl
 	nbtJson.ConversionTime = time.Now().Format(time.RFC3339)
 	nbtJson.Comment = comment
 	buf := bytes.NewReader(b)

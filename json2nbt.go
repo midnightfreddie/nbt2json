@@ -4,27 +4,12 @@ import (
 	"bytes"
 	"encoding/binary"
 	"encoding/json"
-	"fmt"
 	"io"
 	"math"
 	"strconv"
 
 	"github.com/ghodss/yaml"
 )
-
-// JsonParseError is when the data does not match an expected pattern. Pass it message string and downstream error
-type JsonParseError struct {
-	s string
-	e error
-}
-
-func (e JsonParseError) Error() string {
-	var s string
-	if e.e != nil {
-		s = fmt.Sprintf(": %s", e.e.Error())
-	}
-	return fmt.Sprintf("Error parsing json2nbt: %s%s", e.s, s)
-}
 
 // Yaml2Nbt converts JSON byte array to uncompressed NBT byte array
 func Yaml2Nbt(b []byte, byteOrder binary.ByteOrder) ([]byte, error) {
@@ -167,7 +152,7 @@ func writePayload(w io.Writer, byteOrder binary.ByteOrder, m map[string]interfac
 			if err != nil {
 				return JsonParseError{"Error writing float64 payload", err}
 			}
-		} else {// TODO: not tested with json.Number
+		} else { // TODO: not tested with json.Number
 			// return JsonParseError{"Tag Byte value field not a number", err}
 			f = math.NaN()
 			err = binary.Write(w, byteOrder, f)
