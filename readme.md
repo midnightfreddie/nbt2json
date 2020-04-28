@@ -72,7 +72,7 @@ There are some Go options I could adapt for little endian, but I'll have to do e
 ### Exported Go Functions
 
 - Client code needs to `import "github.com/midnightfreddie/nbt2json"`
-- For `byteOrder` parameters, pass `nbt2json.Bedrock` (alias for `binary.LittleEndian`) for Bedrock Edition or `nbt2json.Java` (alias for `binary.BigEndian`) for Java Edition
+- For `binary.byteOrder` parameters, pass `nbt2json.Bedrock` for Bedrock Edition or `nbt2json.Java` for Java Edition (aliases for `binary.LittleEndian` and `binary.BigEndian`, respectively)
 - The functions use byte arrays where you might expect strings. Convert as such: `var myString = someByteArray[:]` or `var myByteArray = []byte(someStringValue)`
 - All errors should bubble up through the error part of the result and should describe where the problem was
 - Nbt2Yaml converts uncompressed NBT byte array to YAML byte array
