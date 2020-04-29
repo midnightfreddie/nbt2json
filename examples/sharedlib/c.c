@@ -3,9 +3,13 @@
 
 int main() {
     printf("Hello, C!\n");
+    
     HelloDll();
+    
     Json2Nbt("Hi from a parameter in C");
-    printf("%s", Nbt2Json());
+
+    char byteArray[] = { 5, 6, 7, 8 };
+    printf("%s", Nbt2Json(byteArray, sizeof(byteArray)));
     return 0;
 }
 
