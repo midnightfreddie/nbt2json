@@ -15,10 +15,12 @@ $Signature = @'
 public static extern void HelloDll();
 [DllImport("libnbt2json.dll")]
 public static extern void Json2Nbt(string cString);
+[DllImport("libnbt2json.dll")]
+public static extern string Nbt2Json();
 '@
 
 Add-Type -MemberDefinition $Signature -Namespace Nbt2Json -Name Lib
 
 [Nbt2Json.Lib]::HelloDll()
 [Nbt2Json.Lib]::Json2Nbt("Hello from a parameter")
-
+[Nbt2Json.Lib]::Nbt2Json()

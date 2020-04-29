@@ -19,8 +19,9 @@ func HelloDll() {
 //   to pass C-native values from Go
 // Oh cool, these comments are in the .h file when no blank lines separate them
 //export Nbt2Json
-func Nbt2Json(b []byte) string {
-	return string(b)
+func Nbt2Json() *C.char {
+	var tempString = "Hello from a Go string"
+	return C.CString(tempString)
 }
 
 // NOTE: Functions don't do anything yet; I'm just trying to figure out how
