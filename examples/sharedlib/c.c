@@ -24,11 +24,20 @@ int main() {
     printf("The first byte of the NBT is %d\n", nbtData[0]);
     printf("Size of NBT is %I64d\n", sizeof(nbtData));
 
-    printf("%s\n", Nbt2Json(nbtData, sizeof(nbtData)));
+    // printf("%s\n", Nbt2Json(nbtData, sizeof(nbtData)));
     // printf("%s\n", Nbt2Json(byteArray, sizeof(byteArray)));
 
-    printf("%s\n", Nbt2Yaml(nbtData, sizeof(nbtData)));
+    // printf("%s\n", Nbt2Yaml(nbtData, sizeof(nbtData)));
     // printf("%s\n", Nbt2Yaml(byteArray, sizeof(byteArray)));
+
+    GoString testGoString;
+    testGoString = SomeGoString();
+    printf("%d\n", testGoString.n);
+    int i;
+    for(i=0;i<testGoString.n;i++) {
+        printf("%d ", testGoString.p[i]);
+    }
+    printf("\n");
 
     return 0;
 }

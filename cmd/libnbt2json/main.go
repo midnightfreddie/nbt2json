@@ -84,4 +84,9 @@ func Yaml2Nbt(cString *C.char) unsafe.Pointer {
 	return cByteArray
 }
 
+//export SomeGoString
+func SomeGoString() string {
+	return "This\x00 is a Go string"
+}
+
 func main() {}
