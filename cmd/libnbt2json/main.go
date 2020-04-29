@@ -66,7 +66,7 @@ func Json2Nbt(cString *C.char) {
 // NOTE: Functions don't do anything yet; I'm just trying to figure out how
 //   to pass C-native values to/from Go
 //export Yaml2Nbt
-func Yaml2Nbt(cString *C.char) {
+func Yaml2Nbt(cString *C.char) unsafe.Pointer {
 	var s string
 	s = C.GoString(cString)
 	nbtData, err := nbt2json.Yaml2Nbt([]byte(s), nbt2json.Bedrock)
@@ -74,12 +74,14 @@ func Yaml2Nbt(cString *C.char) {
 		panic(err)
 	}
 	fmt.Println(s)
+	fmt.Println(len(nbtData))
 	fmt.Println("The first few bytes of the NBT:")
 	for i := 0; i < 5; i++ {
 		fmt.Printf("%d ", nbtData[i])
 	}
 	fmt.Println("")
-	// return []byte(s)
+	cByteArray := C.CBytes(nbtData)
+	return cByteArray
 }
 
 func main() {}
