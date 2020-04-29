@@ -11,11 +11,12 @@
 #>
 
 $Signature = @'
-[DllImport("libnbt2json.dll")]
+[DllImport("libnbt2json.dll", CharSet = CharSet.Ansi)]
 public static extern void HelloDll();
-[DllImport("libnbt2json.dll")]
+[DllImport("libnbt2json.dll", CharSet = CharSet.Ansi)]
 public static extern void Json2Nbt(string cString);
-[DllImport("libnbt2json.dll")]
+[DllImport("libnbt2json.dll", CharSet = CharSet.Ansi)]
+[return: MarshalAs(UnmanagedType.LPStr)]
 public static extern string Nbt2Json();
 '@
 
