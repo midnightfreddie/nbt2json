@@ -26,8 +26,11 @@ func Nbt2Json(b []byte) string {
 // NOTE: Functions don't do anything yet; I'm just trying to figure out how
 //   to pass C-native values from Go
 //export Json2Nbt
-func Json2Nbt(s string) []byte {
-	return []byte(s)
+func Json2Nbt(cString *C.char) {
+	var s string
+	s = C.GoString(cString)
+	fmt.Println(s)
+	// return []byte(s)
 }
 
 func main() {}
