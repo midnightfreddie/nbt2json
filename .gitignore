@@ -1,3 +1,7 @@
 *.exe
 *.apk
 *.aar
+*.dll
+*.so
+*.dylib
+*.h
