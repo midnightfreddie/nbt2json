@@ -39,6 +39,14 @@ int main() {
     }
     printf("\n");
 
+    char *cByteArray;
+    cByteArray = SomeByteArray();
+    printf("Size of C byte array: %I64d\n", sizeof(cByteArray));
+    for(i=0;i<sizeof(cByteArray);i++) {
+        printf("%d ", cByteArray[i]);
+    }
+    printf("\n");
+
     return 0;
 }
 
