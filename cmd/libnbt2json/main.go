@@ -91,11 +91,11 @@ func SomeGoString() string {
 
 // Attempting to figure out how to pass byte arrays back to C
 //export SomeByteArray
-func SomeByteArray() unsafe.Pointer {
+func SomeByteArray() []byte {
 	var byteArray = []byte{1, 2, 3, 4, 5}
 	fmt.Printf("Go length of byte array: %d\n", len(byteArray))
-	cByteArray := C.CBytes(byteArray)
-	return cByteArray
+	// cByteArray := C.CBytes(byteArray)
+	return byteArray
 }
 
 func main() {}
