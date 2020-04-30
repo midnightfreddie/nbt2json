@@ -1,7 +1,7 @@
 <#
     Powershell can use P/Invoke to load non-.NET DLL files
 
-    Place the DLL in the executable search path (the local folder is the easiest
+    Place the DLL (or .so or .dylib) in the executable search path (the local folder is the easiest
     option)
 
     A .NET signature must be defined. It does not use the .h file, but you can
@@ -10,10 +10,16 @@
     is external to the type class.
 #>
 
-$Signature = @'
-[DllImport("libnbt2json.dll", CharSet = CharSet.Ansi)]
+$LibBase = "libnbt2json"
+
+$SharedLib = "${LibBase}.dll"
+if ($IsLinux) { $SharedLib = "${LibBase}.so" }
+if ($IsMacOS) { $SharedLib = "${LibBase}.dylib" }
+
+$Signature = @"
+[DllImport("${SharedLib}", CharSet = CharSet.Ansi)]
 public static extern void HelloDll();
-'@
+"@
 # [DllImport("libnbt2json.dll", CharSet = CharSet.Ansi)]
 # public static extern void Json2Nbt(string cString);
 # [DllImport("libnbt2json.dll", CharSet = CharSet.Ansi)]
