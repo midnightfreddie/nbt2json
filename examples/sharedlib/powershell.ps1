@@ -26,8 +26,57 @@ public static extern void HelloDll();
 # public static extern IntPtr Nbt2Json();
 # '@
 
-Add-Type -MemberDefinition $Signature -Namespace Nbt2Json -Name Lib
+# Add-Type -MemberDefinition $Signature -Namespace Nbt2Json -Name Lib
 
-[Nbt2Json.Lib]::HelloDll()
+# [Nbt2Json.Lib]::HelloDll()
 # [Nbt2Json.Lib]::Json2Nbt("Hello from a parameter")
 # [System.Runtime.InteropServices.Marshal]::PtrToStringAnsi([Nbt2Json.Lib]::Nbt2Json())
+
+
+$Source = @"
+using System;
+using System.Runtime.InteropServices;
+
+namespace Nbt2Json
+{
+    public class Lib
+    {
+        const string libName = "${SharedLib}";
+
+        public struct GoSlice
+        {
+            public IntPtr data;
+            public long len, cap;
+            public GoSlice(IntPtr data, long len, long cap)
+            {
+                this.data = data;
+                this.len = len;
+                this.cap = cap;
+            }
+        }
+        public struct GoString
+        {
+            public string msg;
+            public long len;
+            public GoString(string msg, long len)
+            {
+                this.msg = msg;
+                this.len = len;
+            }
+        }
+
+        [DllImport(libName, CharSet = CharSet.Ansi)]
+        public static extern void HelloDll();
+
+        [DllImport(libName, CharSet = CharSet.Ansi)]
+        public static extern GoSlice SomeByteArray();
+    }
+}
+"@
+
+$Type = Add-Type -TypeDefinition $Source -PassThru
+
+[Nbt2Json.Lib]::HelloDll()
+
+$Foo = [Nbt2Json.Lib]::SomeByteArray()
+$Foo.len
