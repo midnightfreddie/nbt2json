@@ -39,13 +39,16 @@ int main() {
     }
     printf("\n");
 
-    GoSlice foo;
-    foo = SomeByteArray();
-    printf("Size of C byte array: %lld\n", foo.len);
+    // GoSlice foo;
+    // foo = SomeByteArray();
+    // printf("Size of C byte array: %lld\n", foo.len);
     // for(i=0;i<foo.len;i++) {
     //     printf("%d ", ((GoInt *)foo.data)[i]);
     // }
     // printf("\n");
+    ThisName();
+    // struct ThisName_return bar = ThisName();
+    // printf("sba2 len %lld", bar.r1);
 
     return 0;
 }
