@@ -32,38 +32,38 @@ func TestRoundTrip(t *testing.T) {
 	// Get first nbt from test json, get hash
 	nbtData, err := Json2Nbt([]byte(testJson), Bedrock)
 	if err != nil {
-		t.Error(err.Error())
+		t.Fatal("Error converting test json:", err.Error())
 	}
 	nbtHash := h.Sum(nbtData)
 
 	// Put that nbt through to json, get hash
 	jsonOut, err := Nbt2Json(nbtData, Bedrock, "")
 	if err != nil {
-		t.Error(err.Error())
+		t.Fatal("Error in first Nbt2Json conversion:", err.Error())
 	}
 	jsonHash := h.Sum(jsonOut)
 
 	// Back to nbt again
 	nbtData, err = Json2Nbt([]byte(testJson), Bedrock)
 	if err != nil {
-		t.Error(err.Error())
+		t.Fatal("Error converting generated json back to nbt:", err.Error())
 	}
 	nbtHash2 := h.Sum(nbtData)
 
 	// Compare first and second nbt hashes
 	if !bytes.Equal(nbtHash, nbtHash2) {
-		t.Error("Round trip NBT hashes don't match")
+		t.Fatal("Round trip NBT hashes don't match")
 	}
 
 	// Back to json again
 	jsonOut, err = Nbt2Json(nbtData, Bedrock, "")
 	if err != nil {
-		t.Error(err.Error())
+		t.Fatal("Error in second Nbt2Json conversion:", err.Error())
 	}
 	jsonHash2 := h.Sum(jsonOut)
 
 	// Compare two generated json hashes
 	if !bytes.Equal(jsonHash, jsonHash2) {
-		t.Error("Round trip JSON hashes don't match")
+		t.Fatal("Round trip JSON hashes don't match")
 	}
 }
