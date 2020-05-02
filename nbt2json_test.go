@@ -139,6 +139,7 @@ func TestRoundTrip(t *testing.T) {
 	}
 }
 
+// TODO: Test array tags
 func TestValueConversions(t *testing.T) {
 	intTags := []struct {
 		tagType int64
@@ -169,8 +170,10 @@ func TestValueConversions(t *testing.T) {
 		value   float64
 		nbt     []byte
 	}{
+		{5, 0, []byte{5, 0, 0, 0x00, 0x00, 0x00, 0x00}},
 		{5, math.MaxFloat32, []byte{5, 0, 0, 0xff, 0xff, 0x7f, 0x7f}},
 		{5, math.SmallestNonzeroFloat32, []byte{5, 0, 0, 0x01, 0x00, 0x00, 0x00}},
+		{6, 0, []byte{6, 0, 0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}},
 		{6, math.MaxFloat64, []byte{6, 0, 0, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xef, 0x7f}},
 		{6, math.SmallestNonzeroFloat64, []byte{6, 0, 0, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}},
 	}
@@ -181,6 +184,45 @@ func TestValueConversions(t *testing.T) {
 			t.Error("Error in json conversion during range tests", err.Error())
 		} else if !bytes.Equal(nbtData, tag.nbt) {
 			t.Error(fmt.Sprintf("Tag type %d value %g, expected \n%s\n, got \n%s\n", tag.tagType, tag.value, hex.Dump(tag.nbt), hex.Dump(nbtData)))
+		}
+	}
+}
+
+// NOTE: Tested function should throw error to pass
+func TestOutOfRange(t *testing.T) {
+	intTags := []struct {
+		tagType int64
+		value   int64
+	}{
+		{1, math.MaxInt8 + 1},
+		{1, math.MinInt8 - 1},
+		{2, math.MaxInt16 + 1},
+		{2, math.MinInt16 - 1},
+		{3, math.MaxInt32 + 1},
+		{3, math.MinInt32 - 1},
+	}
+
+	for _, tag := range intTags {
+		_, err := Json2Nbt([]byte(fmt.Sprintf(testNumberRangeJsonTemplate, tag.tagType, "", tag.value)), Bedrock)
+		if err == nil {
+			t.Error(fmt.Sprintf("Tag type %d value %d failed to throw out of range error", tag.tagType, tag.value))
+		}
+	}
+
+	floatTags := []struct {
+		tagType int64
+		value   float64
+	}{
+		{5, math.MaxFloat32 * 1.1},
+		{5, -(math.MaxFloat32 * 1.1)},
+		{5, math.SmallestNonzeroFloat32 / 1.1},
+		{5, -(math.SmallestNonzeroFloat32 / 1.1)},
+	}
+
+	for _, tag := range floatTags {
+		_, err := Json2Nbt([]byte(fmt.Sprintf(testNumberRangeJsonTemplate, tag.tagType, "", tag.value)), Bedrock)
+		if err == nil {
+			t.Error(fmt.Sprintf("Tag type %d value %g failed to throw out of range error", tag.tagType, tag.value))
 		}
 	}
 }
