@@ -13,12 +13,12 @@ import (
 )
 
 // Yaml2Nbt converts JSON byte array to uncompressed NBT byte array
-func Yaml2Nbt(b []byte, byteOrder binary.ByteOrder) ([]byte, error) {
+func Yaml2Nbt(b []byte) ([]byte, error) {
 	myJson, err := yaml.YAMLToJSON(b)
 	if err != nil {
 		return nil, JsonParseError{"Error converting YAML to JSON", err}
 	}
-	nbtOut, err := Json2Nbt(myJson, byteOrder)
+	nbtOut, err := Json2Nbt(myJson)
 	if err != nil {
 		return nbtOut, err
 	}
@@ -26,7 +26,7 @@ func Yaml2Nbt(b []byte, byteOrder binary.ByteOrder) ([]byte, error) {
 }
 
 // Json2Nbt converts JSON byte array to uncompressed NBT byte array
-func Json2Nbt(b []byte, byteOrder binary.ByteOrder) ([]byte, error) {
+func Json2Nbt(b []byte) ([]byte, error) {
 	nbtOut := new(bytes.Buffer)
 	var nbtJsonData NbtJson
 	var nbtTag interface{}
@@ -53,7 +53,7 @@ func Json2Nbt(b []byte, byteOrder binary.ByteOrder) ([]byte, error) {
 		return nil, JsonParseError{"JSON input has no top-level value named nbt. JSON-encoded nbt data should be in an array { \"nbt\": [ <HERE> ] }", nil}
 	}
 	for _, nbtTag = range nbtArray {
-		err = writeTag(nbtOut, byteOrder, nbtTag)
+		err = writeTag(nbtOut, nbtTag)
 		if err != nil {
 			return nil, err
 		}
@@ -62,7 +62,7 @@ func Json2Nbt(b []byte, byteOrder binary.ByteOrder) ([]byte, error) {
 	return nbtOut.Bytes(), nil
 }
 
-func writeTag(w io.Writer, byteOrder binary.ByteOrder, myMap interface{}) error {
+func writeTag(w io.Writer, myMap interface{}) error {
 	var err error
 	// TODO: This is panic-exiting when passed a string or null tagType instead of returning error
 	if m, ok := myMap.(map[string]interface{}); ok {
@@ -87,7 +87,7 @@ func writeTag(w io.Writer, byteOrder binary.ByteOrder, myMap interface{}) error 
 			} else {
 				return JsonParseError{fmt.Sprintf("name field '%v' not a string", m["name"]), err}
 			}
-			err = writePayload(w, byteOrder, m, tagType)
+			err = writePayload(w, m, tagType)
 			if err != nil {
 				return err
 			}
@@ -101,7 +101,7 @@ func writeTag(w io.Writer, byteOrder binary.ByteOrder, myMap interface{}) error 
 	return err
 }
 
-func writePayload(w io.Writer, byteOrder binary.ByteOrder, m map[string]interface{}, tagType int64) error {
+func writePayload(w io.Writer, m map[string]interface{}, tagType int64) error {
 	var err error
 
 	switch tagType {
@@ -231,7 +231,7 @@ func writePayload(w io.Writer, byteOrder binary.ByteOrder, m map[string]interfac
 				for _, value := range values {
 					fakeTag := make(map[string]interface{})
 					fakeTag["value"] = value
-					err = writePayload(w, byteOrder, fakeTag, tagListType)
+					err = writePayload(w, fakeTag, tagListType)
 					if err != nil {
 						return JsonParseError{"While writing tag 9 list of type " + strconv.Itoa(int(tagListType)), err}
 					}
@@ -253,7 +253,7 @@ func writePayload(w io.Writer, byteOrder binary.ByteOrder, m map[string]interfac
 	case 10:
 		if values, ok := m["value"].([]interface{}); ok {
 			for _, value := range values {
-				err = writeTag(w, byteOrder, value)
+				err = writeTag(w, value)
 				if err != nil {
 					return JsonParseError{"While writing Compound tags", err}
 				}

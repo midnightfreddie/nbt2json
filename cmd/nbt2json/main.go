@@ -16,7 +16,6 @@ import (
 
 func main() {
 	var inFile, outFile, comment string
-	var byteOrder binary.ByteOrder
 	var skipBytes int
 	app := cli.NewApp()
 	app.Name = "NBT to JSON"
@@ -77,9 +76,9 @@ func main() {
 	}
 	app.Action = func(c *cli.Context) error {
 		if c.String("big-endian") == "true" {
-			byteOrder = nbt2json.Java
+			nbt2json.UseJavaEncoding()
 		} else {
-			byteOrder = nbt2json.Bedrock
+			nbt2json.UseBedrockEncoding()
 		}
 
 		var inData, outData []byte
@@ -99,12 +98,12 @@ func main() {
 
 		if c.String("reverse") == "true" {
 			if c.String("yaml") == "true" {
-				outData, err = nbt2json.Yaml2Nbt(inData, byteOrder)
+				outData, err = nbt2json.Yaml2Nbt(inData)
 				if err != nil {
 					return cli.NewExitError(err, 1)
 				}
 			} else {
-				outData, err = nbt2json.Json2Nbt(inData, byteOrder)
+				outData, err = nbt2json.Json2Nbt(inData)
 				if err != nil {
 					return cli.NewExitError(err, 1)
 				}
@@ -125,12 +124,12 @@ func main() {
 				inData = uncompressed
 			}
 			if c.String("yaml") == "true" {
-				outData, err = nbt2json.Nbt2Yaml(inData[skipBytes:], byteOrder, comment)
+				outData, err = nbt2json.Nbt2Yaml(inData[skipBytes:], comment)
 				if err != nil {
 					return cli.NewExitError(err, 1)
 				}
 			} else {
-				outData, err = nbt2json.Nbt2Json(inData[skipBytes:], byteOrder, comment)
+				outData, err = nbt2json.Nbt2Json(inData[skipBytes:], comment)
 				if err != nil {
 					return cli.NewExitError(err, 1)
 				}

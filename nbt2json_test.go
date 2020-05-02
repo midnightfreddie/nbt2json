@@ -101,21 +101,21 @@ func TestRoundTrip(t *testing.T) {
 	h := sha1.New()
 
 	// Get first nbt from test json, get hash
-	nbtData, err := Json2Nbt([]byte(testJson), Bedrock)
+	nbtData, err := Json2Nbt([]byte(testJson))
 	if err != nil {
 		t.Fatal("Error converting test json:", err.Error())
 	}
 	nbtHash := h.Sum(nbtData)
 
 	// Put that nbt through to json, get hash
-	jsonOut, err := Nbt2Json(nbtData, Bedrock, "")
+	jsonOut, err := Nbt2Json(nbtData, "")
 	if err != nil {
 		t.Fatal("Error in first Nbt2Json conversion:", err.Error())
 	}
 	jsonHash := h.Sum(jsonOut)
 
 	// Back to nbt again
-	nbtData, err = Json2Nbt([]byte(testJson), Bedrock)
+	nbtData, err = Json2Nbt([]byte(testJson))
 	if err != nil {
 		t.Fatal("Error converting generated json back to nbt:", err.Error())
 	}
@@ -127,7 +127,7 @@ func TestRoundTrip(t *testing.T) {
 	}
 
 	// Back to json again
-	jsonOut, err = Nbt2Json(nbtData, Bedrock, "")
+	jsonOut, err = Nbt2Json(nbtData, "")
 	if err != nil {
 		t.Fatal("Error in second Nbt2Json conversion:", err.Error())
 	}
@@ -141,6 +141,8 @@ func TestRoundTrip(t *testing.T) {
 
 // TODO: Test array tags
 func TestValueConversions(t *testing.T) {
+	UseBedrockEncoding()
+
 	intTags := []struct {
 		tagType int64
 		value   int64
@@ -157,7 +159,7 @@ func TestValueConversions(t *testing.T) {
 	}
 
 	for _, tag := range intTags {
-		nbtData, err := Json2Nbt([]byte(fmt.Sprintf(testNumberRangeJsonTemplate, tag.tagType, "", tag.value)), Bedrock)
+		nbtData, err := Json2Nbt([]byte(fmt.Sprintf(testNumberRangeJsonTemplate, tag.tagType, "", tag.value)))
 		if err != nil {
 			t.Error("Error in json conversion during range tests", err.Error())
 		} else if !bytes.Equal(nbtData, tag.nbt) {
@@ -179,7 +181,7 @@ func TestValueConversions(t *testing.T) {
 	}
 
 	for _, tag := range floatTags {
-		nbtData, err := Json2Nbt([]byte(fmt.Sprintf(testNumberRangeJsonTemplate, tag.tagType, "", tag.value)), Bedrock)
+		nbtData, err := Json2Nbt([]byte(fmt.Sprintf(testNumberRangeJsonTemplate, tag.tagType, "", tag.value)))
 		if err != nil {
 			t.Error("Error in json conversion during range tests", err.Error())
 		} else if !bytes.Equal(nbtData, tag.nbt) {
@@ -203,7 +205,7 @@ func TestOutOfRange(t *testing.T) {
 	}
 
 	for _, tag := range intTags {
-		_, err := Json2Nbt([]byte(fmt.Sprintf(testNumberRangeJsonTemplate, tag.tagType, "", tag.value)), Bedrock)
+		_, err := Json2Nbt([]byte(fmt.Sprintf(testNumberRangeJsonTemplate, tag.tagType, "", tag.value)))
 		if err == nil {
 			t.Error(fmt.Sprintf("Tag type %d value %d failed to throw out of range error", tag.tagType, tag.value))
 		}
@@ -220,7 +222,7 @@ func TestOutOfRange(t *testing.T) {
 	}
 
 	for _, tag := range floatTags {
-		_, err := Json2Nbt([]byte(fmt.Sprintf(testNumberRangeJsonTemplate, tag.tagType, "", tag.value)), Bedrock)
+		_, err := Json2Nbt([]byte(fmt.Sprintf(testNumberRangeJsonTemplate, tag.tagType, "", tag.value)))
 		if err == nil {
 			t.Error(fmt.Sprintf("Tag type %d value %g failed to throw out of range error", tag.tagType, tag.value))
 		}
