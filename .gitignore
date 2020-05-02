@@ -6,3 +6,5 @@
 *.dylib
 *.h
 *.dat
+.vscode/
+.DS_store
