@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/binary"
 	"encoding/json"
+	"fmt"
 	"math"
 	"time"
 
@@ -89,7 +90,7 @@ func getTag(r *bytes.Reader) ([]byte, error) {
 		name := make([]byte, nameLen)
 		err = binary.Read(r, byteOrder, &name)
 		if err != nil {
-			return nil, NbtParseError{"Reading Name - is little/big endian byte order set correctly?", err}
+			return nil, NbtParseError{fmt.Sprintf("Reading Name - is UseJavaEncoding or UseBedrockEncoding set correctly? Name length decoded is %d", nameLen), err}
 		}
 		data.Name = string(name[:])
 	}
