@@ -84,7 +84,7 @@ func writeTag(w io.Writer, byteOrder binary.ByteOrder, myMap interface{}) error 
 					return JsonParseError{"Error converting name", err}
 				}
 			} else {
-				return JsonParseError{"name field not a string", err}
+				return JsonParseError{fmt.Sprintf("name field '%v' not a string", m["name"]), err}
 			}
 			err = writePayload(w, byteOrder, m, tagType)
 			if err != nil {
@@ -114,7 +114,7 @@ func writePayload(w io.Writer, byteOrder binary.ByteOrder, m map[string]interfac
 				return JsonParseError{"Error writing byte payload", err}
 			}
 		} else {
-			return JsonParseError{"Tag 1 Byte value field not an integer", err}
+			return JsonParseError{fmt.Sprintf("Tag 1 Byte value field '%v' not an integer", m["value"]), err}
 		}
 	case 2:
 		if i, err := m["value"].(json.Number).Int64(); err == nil {
@@ -126,7 +126,7 @@ func writePayload(w io.Writer, byteOrder binary.ByteOrder, m map[string]interfac
 				return JsonParseError{"Error writing short payload", err}
 			}
 		} else {
-			return JsonParseError{"Tag 2 Short value field not an integer", err}
+			return JsonParseError{fmt.Sprintf("Tag 2 Short value field '%v' not an integer", m["value"]), err}
 		}
 	case 3:
 		if i, err := m["value"].(json.Number).Int64(); err == nil {
@@ -138,7 +138,7 @@ func writePayload(w io.Writer, byteOrder binary.ByteOrder, m map[string]interfac
 				return JsonParseError{"Error writing int32 payload", err}
 			}
 		} else {
-			return JsonParseError{"Tag 3 Int value field not an integer", err}
+			return JsonParseError{fmt.Sprintf("Tag 3 Int value field '%v' not an integer", m["value"]), err}
 		}
 	case 4:
 		if i, err := m["value"].(json.Number).Int64(); err == nil {
@@ -147,7 +147,7 @@ func writePayload(w io.Writer, byteOrder binary.ByteOrder, m map[string]interfac
 				return JsonParseError{"Error writing int64 payload", err}
 			}
 		} else {
-			return JsonParseError{"Tag 4 Long value field not an integer", err}
+			return JsonParseError{fmt.Sprintf("Tag 4 Long value field '%v' not an integer", m["value"]), err}
 		}
 	case 5:
 		if f, err := m["value"].(json.Number).Float64(); err == nil {
@@ -159,7 +159,7 @@ func writePayload(w io.Writer, byteOrder binary.ByteOrder, m map[string]interfac
 				return JsonParseError{"Error writing float32 payload", err}
 			}
 		} else {
-			return JsonParseError{"Tag 5 Float value field not a number", err}
+			return JsonParseError{fmt.Sprintf("Tag 5 Float value field '%v' not a number", m["value"]), err}
 		}
 	case 6:
 		if f, err := m["value"].(json.Number).Float64(); err == nil {
@@ -168,7 +168,7 @@ func writePayload(w io.Writer, byteOrder binary.ByteOrder, m map[string]interfac
 				return JsonParseError{"Error writing float64 payload", err}
 			}
 		} else { // TODO: not tested with json.Number
-			// return JsonParseError{"Tag 6 Double value field not a number", err}
+			// return JsonParseError{fmt.Sprintf("Tag 6 Double value field '%v' not a number", m["value"]), err}
 			f = math.NaN()
 			err = binary.Write(w, byteOrder, f)
 			if err != nil {
@@ -192,11 +192,11 @@ func writePayload(w io.Writer, byteOrder binary.ByteOrder, m map[string]interfac
 						return JsonParseError{"Error writing element of byte array", err}
 					}
 				} else {
-					return JsonParseError{"Tag 7 Byte Array element value field not an integer", err}
+					return JsonParseError{fmt.Sprintf("Tag 7 Byte Array element value field '%v' not an integer", m["value"]), err}
 				}
 			}
 		} else {
-			return JsonParseError{"Tag 7 Byte Array element value field not an array", err}
+			return JsonParseError{fmt.Sprintf("Tag 7 Byte Array element value field '%v' not an array", m["value"]), err}
 		}
 	case 8:
 		if s, ok := m["value"].(string); ok {
@@ -243,11 +243,11 @@ func writePayload(w io.Writer, byteOrder binary.ByteOrder, m map[string]interfac
 				}
 				return nil
 			} else {
-				return JsonParseError{"Tag 9 List's List value field not an array", err}
+				return JsonParseError{fmt.Sprintf("Tag 9 List's value field '%v' not an array or null", listMap["list"]), err}
 			}
 
 		} else {
-			return JsonParseError{"Tag 9 List value field not an object", err}
+			return JsonParseError{fmt.Sprintf("Tag 9 List value field '%v' not an object", m["value"]), err}
 		}
 	case 10:
 		if values, ok := m["value"].([]interface{}); ok {
@@ -263,7 +263,7 @@ func writePayload(w io.Writer, byteOrder binary.ByteOrder, m map[string]interfac
 				return JsonParseError{"Writing End tag", err}
 			}
 		} else {
-			return JsonParseError{"Tag 10 Compound value field not an array", err}
+			return JsonParseError{fmt.Sprintf("Tag 10 Compound value field '%v' not an array", m["value"]), err}
 		}
 	case 11:
 		if values, ok := m["value"].([]interface{}); ok {
@@ -281,11 +281,11 @@ func writePayload(w io.Writer, byteOrder binary.ByteOrder, m map[string]interfac
 						return JsonParseError{"Error writing element of int32 array", err}
 					}
 				} else {
-					return JsonParseError{"Tag 11 Int Array value field not an integer", err}
+					return JsonParseError{fmt.Sprintf("Tag 11 Int Array element value field '%v' not an integer", value), err}
 				}
 			}
 		} else {
-			return JsonParseError{"Tag Int Array value field not an array", err}
+			return JsonParseError{fmt.Sprintf("Tag Int Array value field '%v' not an array", m["value"]), err}
 		}
 	case 12:
 		if values, ok := m["value"].([]interface{}); ok {
@@ -300,14 +300,14 @@ func writePayload(w io.Writer, byteOrder binary.ByteOrder, m map[string]interfac
 						return JsonParseError{"Error writing element of int64 array", err}
 					}
 				} else {
-					return JsonParseError{"Tag Long Array value field not an integer", err}
+					return JsonParseError{fmt.Sprintf("Tag Long Array element value field '%v' not an integer", value), err}
 				}
 			}
 		} else {
-			return JsonParseError{"Tag 12 Long Array value field not an array", err}
+			return JsonParseError{fmt.Sprintf("Tag 12 Long Array element value field '%v' not an array", m["value"]), err}
 		}
 	default:
-		return JsonParseError{"tagType " + strconv.Itoa(int(tagType)) + " is not recognized", err}
+		return JsonParseError{fmt.Sprintf("tagType '%v' is not recognized", tagType), err}
 	}
 	return err
 }
