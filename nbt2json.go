@@ -40,6 +40,14 @@ type NbtLong struct {
 	ValueMost  int32 `json:"valueMost"`
 }
 
+// Turns an int64 (nbt long) into a valueLeast/valueMost json pair
+func longToIntPair(i int64) NbtLong {
+	var nbtLong NbtLong
+	nbtLong.ValueLeast = int32(i & 0xffffffff)
+	nbtLong.ValueMost = int32(i >> 32)
+	return nbtLong
+}
+
 // Nbt2Yaml converts uncompressed NBT byte array to YAML byte array
 func Nbt2Yaml(b []byte, comment string) ([]byte, error) {
 	jsonOut, err := Nbt2Json(b, comment)
@@ -138,14 +146,11 @@ func getPayload(r *bytes.Reader, tagType byte) (interface{}, error) {
 		output = i
 	case 4:
 		var i int64
-		var nbtLong NbtLong
 		err = binary.Read(r, byteOrder, &i)
 		if err != nil {
 			return nil, NbtParseError{"Reading int64", err}
 		}
-		nbtLong.ValueLeast = int32(i & 0xffffffff)
-		nbtLong.ValueMost = int32(i >> 32)
-		output = nbtLong
+		output = longToIntPair(i)
 	case 5:
 		var f float32
 		err = binary.Read(r, byteOrder, &f)
@@ -250,7 +255,7 @@ func getPayload(r *bytes.Reader, tagType byte) (interface{}, error) {
 		}
 		output = intArray
 	case 12:
-		var longArray []int64
+		var longArray []NbtLong
 		var numRecords, oneInt int64
 		err := binary.Read(r, byteOrder, &numRecords)
 		if err != nil {
@@ -261,7 +266,7 @@ func getPayload(r *bytes.Reader, tagType byte) (interface{}, error) {
 			if err != nil {
 				return nil, NbtParseError{"Reading long in long array tag", err}
 			}
-			longArray = append(longArray, oneInt)
+			longArray = append(longArray, longToIntPair(i))
 		}
 		output = longArray
 	default:
