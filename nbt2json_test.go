@@ -3,6 +3,9 @@ package nbt2json
 import (
 	"bytes"
 	"crypto/sha1"
+	"encoding/hex"
+	"fmt"
+	"math"
 	"testing"
 )
 
@@ -10,7 +13,7 @@ import (
 
 // TODO: Add list/array types to test json
 
-var testJson = `{
+const testJson = `{
   "nbt": [
     {
       "tagType": 10,
@@ -84,6 +87,16 @@ var testJson = `{
 				},
 */
 
+const testNumberRangeJsonTemplate = `{
+  "nbt": [
+    {
+      "tagType": %d,
+      "name": "%s",
+      "value": %v
+    }
+  ]
+}`
+
 func TestRoundTrip(t *testing.T) {
 	h := sha1.New()
 
@@ -123,5 +136,51 @@ func TestRoundTrip(t *testing.T) {
 	// Compare two generated json hashes
 	if !bytes.Equal(jsonHash, jsonHash2) {
 		t.Fatal("Round trip JSON hashes don't match")
+	}
+}
+
+func TestValueConversions(t *testing.T) {
+	intTags := []struct {
+		tagType int64
+		value   int64
+		nbt     []byte
+	}{
+		{1, math.MaxInt8, []byte{1, 0, 0, 0x7f}},
+		{1, math.MinInt8, []byte{1, 0, 0, 0x80}},
+		{2, math.MaxInt16, []byte{2, 0, 0, 0xff, 0x7f}},
+		{2, math.MinInt16, []byte{2, 0, 0, 0x00, 0x80}},
+		{3, math.MaxInt32, []byte{3, 0, 0, 0xff, 0xff, 0xff, 0x7f}},
+		{3, math.MinInt32, []byte{3, 0, 0, 0x00, 0x00, 0x00, 0x80}},
+		{4, math.MaxInt64, []byte{4, 0, 0, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x7f}},
+		{4, math.MinInt64, []byte{4, 0, 0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x80}},
+	}
+
+	for _, tag := range intTags {
+		nbtData, err := Json2Nbt([]byte(fmt.Sprintf(testNumberRangeJsonTemplate, tag.tagType, "", tag.value)), Bedrock)
+		if err != nil {
+			t.Error("Error in json conversion during range tests", err.Error())
+		} else if !bytes.Equal(nbtData, tag.nbt) {
+			t.Error(fmt.Sprintf("Tag type %d value %d, expected \n%s\n, got \n%s\n", tag.tagType, tag.value, hex.Dump(tag.nbt), hex.Dump(nbtData)))
+		}
+	}
+
+	floatTags := []struct {
+		tagType int64
+		value   float64
+		nbt     []byte
+	}{
+		{5, math.MaxFloat32, []byte{5, 0, 0, 0xff, 0xff, 0x7f, 0x7f}},
+		{5, math.SmallestNonzeroFloat32, []byte{5, 0, 0, 0x01, 0x00, 0x00, 0x00}},
+		{6, math.MaxFloat64, []byte{6, 0, 0, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xef, 0x7f}},
+		{6, math.SmallestNonzeroFloat64, []byte{6, 0, 0, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}},
+	}
+
+	for _, tag := range floatTags {
+		nbtData, err := Json2Nbt([]byte(fmt.Sprintf(testNumberRangeJsonTemplate, tag.tagType, "", tag.value)), Bedrock)
+		if err != nil {
+			t.Error("Error in json conversion during range tests", err.Error())
+		} else if !bytes.Equal(nbtData, tag.nbt) {
+			t.Error(fmt.Sprintf("Tag type %d value %g, expected \n%s\n, got \n%s\n", tag.tagType, tag.value, hex.Dump(tag.nbt), hex.Dump(nbtData)))
+		}
 	}
 }
