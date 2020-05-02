@@ -50,7 +50,7 @@ func Json2Nbt(b []byte, byteOrder binary.ByteOrder) ([]byte, error) {
 		return nil, JsonParseError{"Error unmarshalling nbt: value", err}
 	}
 	if len(nbtArray) == 0 {
-		return nil, JsonParseError{"JSON input has no top-level value named nbt. Nbt data should be { \"nbt\": <HERE> }", err}
+		return nil, JsonParseError{"JSON input has no top-level value named nbt. JSON-encoded nbt data should be in an array { \"nbt\": [ <HERE> ] }", nil}
 	}
 	for _, nbtTag = range nbtArray {
 		err = writeTag(nbtOut, byteOrder, nbtTag)
