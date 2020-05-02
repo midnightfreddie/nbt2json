@@ -64,6 +64,7 @@ func Json2Nbt(b []byte, byteOrder binary.ByteOrder) ([]byte, error) {
 
 func writeTag(w io.Writer, byteOrder binary.ByteOrder, myMap interface{}) error {
 	var err error
+	// TODO: This is panic-exiting when passed a string or null tagType instead of returning error
 	if m, ok := myMap.(map[string]interface{}); ok {
 		if tagType, err := m["tagType"].(json.Number).Int64(); err == nil {
 			if tagType == 0 {
@@ -92,7 +93,7 @@ func writeTag(w io.Writer, byteOrder binary.ByteOrder, myMap interface{}) error 
 			}
 
 		} else {
-			return JsonParseError{"tagType is not numeric", err}
+			return JsonParseError{fmt.Sprintf("tagType '%v' is not an integer", m["tagType"]), err}
 		}
 	} else {
 		return JsonParseError{"writeTag: myMap is not map[string]interface{}", err}
