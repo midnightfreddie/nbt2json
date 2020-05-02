@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/binary"
 	"encoding/json"
+	"fmt"
 	"io"
 	"math"
 	"strconv"
@@ -105,6 +106,9 @@ func writePayload(w io.Writer, byteOrder binary.ByteOrder, m map[string]interfac
 	switch tagType {
 	case 1:
 		if i, err := m["value"].(json.Number).Int64(); err == nil {
+			if i < math.MinInt8 || i > math.MaxInt8 {
+				return JsonParseError{fmt.Sprintf("%d is out of range for tag 1 - Byte", i), nil}
+			}
 			err = binary.Write(w, byteOrder, int8(i))
 			if err != nil {
 				return JsonParseError{"Error writing byte payload", err}
@@ -114,6 +118,9 @@ func writePayload(w io.Writer, byteOrder binary.ByteOrder, m map[string]interfac
 		}
 	case 2:
 		if i, err := m["value"].(json.Number).Int64(); err == nil {
+			if i < math.MinInt16 || i > math.MaxInt16 {
+				return JsonParseError{fmt.Sprintf("%d is out of range for tag 2 - Short", i), nil}
+			}
 			err = binary.Write(w, byteOrder, int16(i))
 			if err != nil {
 				return JsonParseError{"Error writing short payload", err}
@@ -123,6 +130,9 @@ func writePayload(w io.Writer, byteOrder binary.ByteOrder, m map[string]interfac
 		}
 	case 3:
 		if i, err := m["value"].(json.Number).Int64(); err == nil {
+			if i < math.MinInt32 || i > math.MaxInt32 {
+				return JsonParseError{fmt.Sprintf("%d is out of range for tag 3 - Int", i), nil}
+			}
 			err = binary.Write(w, byteOrder, int32(i))
 			if err != nil {
 				return JsonParseError{"Error writing int32 payload", err}
@@ -141,6 +151,9 @@ func writePayload(w io.Writer, byteOrder binary.ByteOrder, m map[string]interfac
 		}
 	case 5:
 		if f, err := m["value"].(json.Number).Float64(); err == nil {
+			if f != 0 && (math.Abs(f) < math.SmallestNonzeroFloat32 || math.Abs(f) > math.MaxFloat32) {
+				return JsonParseError{fmt.Sprintf("%g is out of range for tag 5 - Float", f), nil}
+			}
 			err = binary.Write(w, byteOrder, float32(f))
 			if err != nil {
 				return JsonParseError{"Error writing float32 payload", err}
@@ -171,6 +184,9 @@ func writePayload(w io.Writer, byteOrder binary.ByteOrder, m map[string]interfac
 			}
 			for _, value := range values {
 				if i, err := value.(json.Number).Int64(); err == nil {
+					if i < math.MinInt8 || i > math.MaxInt8 {
+						return JsonParseError{fmt.Sprintf("%d is out of range for Byte in tag 7 - Byte Array", i), nil}
+					}
 					err = binary.Write(w, byteOrder, int8(i))
 					if err != nil {
 						return JsonParseError{"Error writing element of byte array", err}
@@ -257,6 +273,9 @@ func writePayload(w io.Writer, byteOrder binary.ByteOrder, m map[string]interfac
 			}
 			for _, value := range values {
 				if i, err := value.(json.Number).Int64(); err == nil {
+					if i < math.MinInt32 || i > math.MaxInt32 {
+						return JsonParseError{fmt.Sprintf("%d is out of range for Int in tag 11 - Int Array", i), nil}
+					}
 					err = binary.Write(w, byteOrder, int32(i))
 					if err != nil {
 						return JsonParseError{"Error writing element of int32 array", err}

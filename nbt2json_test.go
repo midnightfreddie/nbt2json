@@ -19,7 +19,7 @@ var testJson = `{
         {
           "tagType": 1,
           "name": "TestByte",
-          "value": 64
+          "value": 127
         },
         {
           "tagType": 2,
