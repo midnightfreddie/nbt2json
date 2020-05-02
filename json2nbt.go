@@ -114,7 +114,7 @@ func writePayload(w io.Writer, byteOrder binary.ByteOrder, m map[string]interfac
 				return JsonParseError{"Error writing byte payload", err}
 			}
 		} else {
-			return JsonParseError{"Tag Byte value field not a number", err}
+			return JsonParseError{"Tag 1 Byte value field not an integer", err}
 		}
 	case 2:
 		if i, err := m["value"].(json.Number).Int64(); err == nil {
@@ -126,7 +126,7 @@ func writePayload(w io.Writer, byteOrder binary.ByteOrder, m map[string]interfac
 				return JsonParseError{"Error writing short payload", err}
 			}
 		} else {
-			return JsonParseError{"Tag Byte value field not a number", err}
+			return JsonParseError{"Tag 2 Short value field not an integer", err}
 		}
 	case 3:
 		if i, err := m["value"].(json.Number).Int64(); err == nil {
@@ -138,7 +138,7 @@ func writePayload(w io.Writer, byteOrder binary.ByteOrder, m map[string]interfac
 				return JsonParseError{"Error writing int32 payload", err}
 			}
 		} else {
-			return JsonParseError{"Tag Byte value field not a number", err}
+			return JsonParseError{"Tag 3 Int value field not an integer", err}
 		}
 	case 4:
 		if i, err := m["value"].(json.Number).Int64(); err == nil {
@@ -147,7 +147,7 @@ func writePayload(w io.Writer, byteOrder binary.ByteOrder, m map[string]interfac
 				return JsonParseError{"Error writing int64 payload", err}
 			}
 		} else {
-			return JsonParseError{"Tag Byte value field not a number", err}
+			return JsonParseError{"Tag 4 Long value field not an integer", err}
 		}
 	case 5:
 		if f, err := m["value"].(json.Number).Float64(); err == nil {
@@ -159,7 +159,7 @@ func writePayload(w io.Writer, byteOrder binary.ByteOrder, m map[string]interfac
 				return JsonParseError{"Error writing float32 payload", err}
 			}
 		} else {
-			return JsonParseError{"Tag Byte value field not a number", err}
+			return JsonParseError{"Tag 5 Float value field not a number", err}
 		}
 	case 6:
 		if f, err := m["value"].(json.Number).Float64(); err == nil {
@@ -168,7 +168,7 @@ func writePayload(w io.Writer, byteOrder binary.ByteOrder, m map[string]interfac
 				return JsonParseError{"Error writing float64 payload", err}
 			}
 		} else { // TODO: not tested with json.Number
-			// return JsonParseError{"Tag Byte value field not a number", err}
+			// return JsonParseError{"Tag 6 Double value field not a number", err}
 			f = math.NaN()
 			err = binary.Write(w, byteOrder, f)
 			if err != nil {
@@ -192,11 +192,11 @@ func writePayload(w io.Writer, byteOrder binary.ByteOrder, m map[string]interfac
 						return JsonParseError{"Error writing element of byte array", err}
 					}
 				} else {
-					return JsonParseError{"Tag Byte value field not a number", err}
+					return JsonParseError{"Tag 7 Byte Array element value field not an integer", err}
 				}
 			}
 		} else {
-			return JsonParseError{"Tag Byte Array value field not an array", err}
+			return JsonParseError{"Tag 7 Byte Array element value field not an array", err}
 		}
 	case 8:
 		if s, ok := m["value"].(string); ok {
@@ -209,7 +209,7 @@ func writePayload(w io.Writer, byteOrder binary.ByteOrder, m map[string]interfac
 				return JsonParseError{"Error writing string payload", err}
 			}
 		} else {
-			return JsonParseError{"Tag String value field not a number", err}
+			return JsonParseError{fmt.Sprintf("Tag 8 String value field '%v' not a string", m["value"]), err}
 		}
 	case 9:
 		// important: tagListType needs to be in scope to be passed to writePayload
@@ -219,35 +219,35 @@ func writePayload(w io.Writer, byteOrder binary.ByteOrder, m map[string]interfac
 			if tagListType, err = listMap["tagListType"].(json.Number).Int64(); err == nil {
 				err = binary.Write(w, byteOrder, byte(tagListType))
 				if err != nil {
-					return JsonParseError{"While writing tag list type", err}
+					return JsonParseError{"While writing tag 9 list type", err}
 				}
 			}
 			if values, ok := listMap["list"].([]interface{}); ok {
 				err = binary.Write(w, byteOrder, int32(len(values)))
 				if err != nil {
-					return JsonParseError{"While writing tag list size", err}
+					return JsonParseError{"While writing tag 9 list size", err}
 				}
 				for _, value := range values {
 					fakeTag := make(map[string]interface{})
 					fakeTag["value"] = value
 					err = writePayload(w, byteOrder, fakeTag, tagListType)
 					if err != nil {
-						return JsonParseError{"While writing tag list of type " + strconv.Itoa(int(tagListType)), err}
+						return JsonParseError{"While writing tag 9 list of type " + strconv.Itoa(int(tagListType)), err}
 					}
 				}
 			} else if listMap["list"] == nil {
 				// NBT lists can be null / nil and therefore aren't represented as an array in JSON
 				err = binary.Write(w, byteOrder, int32(0))
 				if err != nil {
-					return JsonParseError{"While writing tag list null size", err}
+					return JsonParseError{"While writing tag 9 list null size", err}
 				}
 				return nil
 			} else {
-				return JsonParseError{"Tag List's List value field not an array", err}
+				return JsonParseError{"Tag 9 List's List value field not an array", err}
 			}
 
 		} else {
-			return JsonParseError{"Tag List value field not an object", err}
+			return JsonParseError{"Tag 9 List value field not an object", err}
 		}
 	case 10:
 		if values, ok := m["value"].([]interface{}); ok {
@@ -263,7 +263,7 @@ func writePayload(w io.Writer, byteOrder binary.ByteOrder, m map[string]interfac
 				return JsonParseError{"Writing End tag", err}
 			}
 		} else {
-			return JsonParseError{"Tag Compound value field not an array", err}
+			return JsonParseError{"Tag 10 Compound value field not an array", err}
 		}
 	case 11:
 		if values, ok := m["value"].([]interface{}); ok {
@@ -281,7 +281,7 @@ func writePayload(w io.Writer, byteOrder binary.ByteOrder, m map[string]interfac
 						return JsonParseError{"Error writing element of int32 array", err}
 					}
 				} else {
-					return JsonParseError{"Tag Int value field not a number", err}
+					return JsonParseError{"Tag 11 Int Array value field not an integer", err}
 				}
 			}
 		} else {
@@ -300,11 +300,11 @@ func writePayload(w io.Writer, byteOrder binary.ByteOrder, m map[string]interfac
 						return JsonParseError{"Error writing element of int64 array", err}
 					}
 				} else {
-					return JsonParseError{"Tag Int value field not a number", err}
+					return JsonParseError{"Tag Long Array value field not an integer", err}
 				}
 			}
 		} else {
-			return JsonParseError{"Tag Int Array value field not an array", err}
+			return JsonParseError{"Tag 12 Long Array value field not an array", err}
 		}
 	default:
 		return JsonParseError{"tagType " + strconv.Itoa(int(tagType)) + " is not recognized", err}
