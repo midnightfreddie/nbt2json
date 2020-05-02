@@ -1,3 +1,17 @@
+## v0.3.4
+
+This version has no data differences from v.0.3.3. It just has improved error
+messaging and Go tests. I wanted to make this release mostly for those who would
+use it as a module so they have the new improvements before I make some breaking
+changes for the next version.
+
+- Added Go tests in nbt2json_test.go
+- Corrected mislabeled error messages
+- Added errors for missing "nbt" in json and out-of-range numbers
+- Added input value to error message output
+- Refactored module code to include commmon.go for possibly interesting exports
+- Executable now pulls version and url from the module values in common.go
+
 ## v0.3.3
 
 - Merged VADemon's fix for int64s

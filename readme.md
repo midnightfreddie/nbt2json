@@ -29,7 +29,7 @@ USAGE:
    nbt2json.exe [global options] command [command options] [arguments...]
 
 VERSION:
-   0.3.3
+   0.3.4
 
 AUTHOR:
    Jim Nelson <jim@jimnelson.us>

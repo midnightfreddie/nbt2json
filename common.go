@@ -6,7 +6,7 @@ import (
 )
 
 // Version is the json document's nbt2JsonVersion:
-const Version = "0.3.3"
+const Version = "0.3.4"
 
 // Nbt2JsonUrl is inserted in the json document as nbt2JsonUrl
 const Nbt2JsonUrl = "https://github.com/midnightfreddie/nbt2json"
