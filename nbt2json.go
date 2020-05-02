@@ -35,17 +35,27 @@ type NbtTagList struct {
 }
 
 // NbtLong stores a 64-bit int into two 32-bit values for json portability. ValueMost are the high 32 bits and ValueLeast are the low 32 bits.
+//   using uint32s to avoid Go trying to outsmart us on "negative" int32s
 type NbtLong struct {
-	ValueLeast int32 `json:"valueLeast"`
-	ValueMost  int32 `json:"valueMost"`
+	ValueLeast uint32 `json:"valueLeast"`
+	ValueMost  uint32 `json:"valueMost"`
 }
 
 // Turns an int64 (nbt long) into a valueLeast/valueMost json pair
 func longToIntPair(i int64) NbtLong {
 	var nbtLong NbtLong
-	nbtLong.ValueLeast = int32(i & 0xffffffff)
-	nbtLong.ValueMost = int32(i >> 32)
+	nbtLong.ValueLeast = uint32(i & 0xffffffff)
+	nbtLong.ValueMost = uint32(i >> 32)
 	return nbtLong
+}
+
+func intPairToLong(nbtLong NbtLong) int64 {
+	var i int64
+	var temp int64
+	i = int64(nbtLong.ValueLeast)
+	temp = int64(nbtLong.ValueMost)
+	i = i | (temp << 32)
+	return i
 }
 
 // Nbt2Yaml converts uncompressed NBT byte array to YAML byte array
@@ -270,7 +280,7 @@ func getPayload(r *bytes.Reader, tagType byte) (interface{}, error) {
 		}
 		output = longArray
 	default:
-		return nil, NbtParseError{"TagType not recognized", nil}
+		return nil, NbtParseError{fmt.Sprintf("TagType %d not recognized", tagType), nil}
 	}
 	return output, nil
 }
