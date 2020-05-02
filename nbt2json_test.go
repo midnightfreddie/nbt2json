@@ -161,10 +161,21 @@ func TestValueConversions(t *testing.T) {
 	for _, tag := range intTags {
 		nbtData, err := Json2Nbt([]byte(fmt.Sprintf(testNumberRangeJsonTemplate, tag.tagType, "", tag.value)))
 		if err != nil {
-			t.Error("Error in json conversion during range tests", err.Error())
+			t.Error("Error in json conversion during value tests", err.Error())
 		} else if !bytes.Equal(nbtData, tag.nbt) {
 			t.Error(fmt.Sprintf("Tag type %d value %d, expected \n%s\n, got \n%s\n", tag.tagType, tag.value, hex.Dump(tag.nbt), hex.Dump(nbtData)))
 		}
+		// jsonData, err := Nbt2Json(nbtData, "")
+		// if err != nil {
+		// 	t.Error("Error in nbt re-conversion during value tests", err.Error())
+		// } else {
+		// 	nbtData, err = Json2Nbt(jsonData)
+		// 	if err != nil {
+		// 		t.Error("Error in json re-conversion during value tests", err.Error())
+		// 	} else if !bytes.Equal(nbtData, tag.nbt) {
+		// 		t.Error(fmt.Sprintf("Error on round-trip value reconversion - tag type %d value %d, expected \n%s\n, got \n%s\n", tag.tagType, tag.value, hex.Dump(tag.nbt), hex.Dump(nbtData)))
+		// 	}
+		// }
 	}
 
 	floatTags := []struct {
@@ -183,9 +194,20 @@ func TestValueConversions(t *testing.T) {
 	for _, tag := range floatTags {
 		nbtData, err := Json2Nbt([]byte(fmt.Sprintf(testNumberRangeJsonTemplate, tag.tagType, "", tag.value)))
 		if err != nil {
-			t.Error("Error in json conversion during range tests", err.Error())
+			t.Error("Error in json conversion during value tests", err.Error())
 		} else if !bytes.Equal(nbtData, tag.nbt) {
 			t.Error(fmt.Sprintf("Tag type %d value %g, expected \n%s\n, got \n%s\n", tag.tagType, tag.value, hex.Dump(tag.nbt), hex.Dump(nbtData)))
+		}
+		jsonData, err := Nbt2Json(nbtData, "")
+		if err != nil {
+			t.Error("Error in nbt re-conversion during value tests", err.Error())
+		} else {
+			nbtData, err = Json2Nbt(jsonData)
+			if err != nil {
+				t.Error("Error in json re-conversion during value tests", err.Error())
+			} else if !bytes.Equal(nbtData, tag.nbt) {
+				t.Error(fmt.Sprintf("Error on round-trip value reconversion - tag type %d value %g, expected \n%s\n, got \n%s\n", tag.tagType, tag.value, hex.Dump(tag.nbt), hex.Dump(nbtData)))
+			}
 		}
 	}
 }
