@@ -142,13 +142,13 @@ func writePayload(w io.Writer, m map[string]interface{}, tagType int64) error {
 			return JsonParseError{fmt.Sprintf("Tag 3 Int value field '%v' not an integer", m["value"]), err}
 		}
 	case 4:
-		if i, err := m["value"].(json.Number).Int64(); err == nil {
-			err = binary.Write(w, byteOrder, int64(i))
+		if o, ok := m["value"].(NbtLong); ok {
+			err = binary.Write(w, byteOrder, int64(intPairToLong(o)))
 			if err != nil {
 				return JsonParseError{"Error writing int64 payload", err}
 			}
 		} else {
-			return JsonParseError{fmt.Sprintf("Tag 4 Long value field '%v' not an integer", m["value"]), err}
+			return JsonParseError{fmt.Sprintf("Tag 4 Long value field '%v' not an object", m["value"]), err}
 		}
 	case 5:
 		if f, err := m["value"].(json.Number).Float64(); err == nil {
