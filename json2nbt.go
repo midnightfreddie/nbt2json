@@ -32,10 +32,7 @@ func Json2Nbt(b []byte) ([]byte, error) {
 	var nbtTag interface{}
 	var nbtArray []interface{}
 	var err error
-	d := json.NewDecoder(bytes.NewBuffer(b))
-	d.UseNumber()
-
-	err = d.Decode(&nbtJsonData)
+	err = json.Unmarshal(b, &nbtJsonData)
 	if err != nil {
 		return nil, JsonParseError{"Error parsing JSON input. Is input JSON-formatted?", err}
 	}
@@ -43,9 +40,7 @@ func Json2Nbt(b []byte) ([]byte, error) {
 	if err != nil {
 		return nil, JsonParseError{"Error marshalling nbt: json.RawMessage", err}
 	}
-	d2 := json.NewDecoder(bytes.NewBuffer(temp))
-	d2.UseNumber()
-	err = d2.Decode(&nbtArray)
+	err = json.Unmarshal(temp, &nbtArray)
 	if err != nil {
 		return nil, JsonParseError{"Error unmarshalling nbt: value", err}
 	}
@@ -66,7 +61,7 @@ func writeTag(w io.Writer, myMap interface{}) error {
 	var err error
 	// TODO: This is panic-exiting when passed a string or null tagType instead of returning error
 	if m, ok := myMap.(map[string]interface{}); ok {
-		if tagType, err := m["tagType"].(json.Number).Int64(); err == nil {
+		if tagType, ok := m["tagType"].(float64); ok {
 			if tagType == 0 {
 				// not expecting a 0 tag, but if it occurs just ignore it
 				return nil
@@ -101,14 +96,14 @@ func writeTag(w io.Writer, myMap interface{}) error {
 	return err
 }
 
-func writePayload(w io.Writer, m map[string]interface{}, tagType int64) error {
+func writePayload(w io.Writer, m map[string]interface{}, tagType float64) error {
 	var err error
 
 	switch tagType {
 	case 1:
-		if i, err := m["value"].(json.Number).Int64(); err == nil {
+		if i, ok := m["value"].(float64); ok {
 			if i < math.MinInt8 || i > math.MaxInt8 {
-				return JsonParseError{fmt.Sprintf("%d is out of range for tag 1 - Byte", i), nil}
+				return JsonParseError{fmt.Sprintf("%v is out of range for tag 1 - Byte", i), nil}
 			}
 			err = binary.Write(w, byteOrder, int8(i))
 			if err != nil {
@@ -118,9 +113,9 @@ func writePayload(w io.Writer, m map[string]interface{}, tagType int64) error {
 			return JsonParseError{fmt.Sprintf("Tag 1 Byte value field '%v' not an integer", m["value"]), err}
 		}
 	case 2:
-		if i, err := m["value"].(json.Number).Int64(); err == nil {
+		if i, ok := m["value"].(float64); ok {
 			if i < math.MinInt16 || i > math.MaxInt16 {
-				return JsonParseError{fmt.Sprintf("%d is out of range for tag 2 - Short", i), nil}
+				return JsonParseError{fmt.Sprintf("%v is out of range for tag 2 - Short", i), nil}
 			}
 			err = binary.Write(w, byteOrder, int16(i))
 			if err != nil {
@@ -130,9 +125,9 @@ func writePayload(w io.Writer, m map[string]interface{}, tagType int64) error {
 			return JsonParseError{fmt.Sprintf("Tag 2 Short value field '%v' not an integer", m["value"]), err}
 		}
 	case 3:
-		if i, err := m["value"].(json.Number).Int64(); err == nil {
+		if i, ok := m["value"].(float64); ok {
 			if i < math.MinInt32 || i > math.MaxInt32 {
-				return JsonParseError{fmt.Sprintf("%d is out of range for tag 3 - Int", i), nil}
+				return JsonParseError{fmt.Sprintf("%v is out of range for tag 3 - Int", i), nil}
 			}
 			err = binary.Write(w, byteOrder, int32(i))
 			if err != nil {
@@ -144,13 +139,13 @@ func writePayload(w io.Writer, m map[string]interface{}, tagType int64) error {
 	case 4:
 		if int64Map, ok := m["value"].(map[string]interface{}); ok {
 			var nbtLong NbtLong
-			var vl, vm int64
-			if vl, err = int64Map["valueLeast"].(json.Number).Int64(); err != nil {
+			var vl, vm float64
+			if vl, ok = int64Map["valueLeast"].(float64); !ok {
 				return JsonParseError{fmt.Sprintf("Error reading valueLeast of '%v'", int64Map["valueLeast"]), nil}
 			}
 			nbtLong.ValueLeast = uint32(vl)
-			if vm, err = int64Map["valueMost"].(json.Number).Int64(); err != nil {
-				return JsonParseError{fmt.Sprintf("Error reading valueMost of '%v'", int64Map["valueLeast"]), nil}
+			if vm, ok = int64Map["valueMost"].(float64); !ok {
+				return JsonParseError{fmt.Sprintf("Error reading valueMost of '%v'", int64Map["valueMost"]), nil}
 			}
 			nbtLong.ValueMost = uint32(vm)
 			err = binary.Write(w, byteOrder, int64(intPairToLong(nbtLong)))
@@ -161,7 +156,7 @@ func writePayload(w io.Writer, m map[string]interface{}, tagType int64) error {
 			return JsonParseError{fmt.Sprintf("Tag 4 Long value field '%v' not an object", m["value"]), err}
 		}
 	case 5:
-		if f, err := m["value"].(json.Number).Float64(); err == nil {
+		if f, ok := m["value"].(float64); ok {
 			if f != 0 && (math.Abs(f) < math.SmallestNonzeroFloat32 || math.Abs(f) > math.MaxFloat32) {
 				return JsonParseError{fmt.Sprintf("%g is out of range for tag 5 - Float", f), nil}
 			}
@@ -173,12 +168,12 @@ func writePayload(w io.Writer, m map[string]interface{}, tagType int64) error {
 			return JsonParseError{fmt.Sprintf("Tag 5 Float value field '%v' not a number", m["value"]), err}
 		}
 	case 6:
-		if f, err := m["value"].(json.Number).Float64(); err == nil {
+		if f, ok := m["value"].(float64); ok {
 			err = binary.Write(w, byteOrder, f)
 			if err != nil {
 				return JsonParseError{"Error writing float64 payload", err}
 			}
-		} else { // TODO: not tested with json.Number
+		} else {
 			// return JsonParseError{fmt.Sprintf("Tag 6 Double value field '%v' not a number", m["value"]), err}
 			f = math.NaN()
 			err = binary.Write(w, byteOrder, f)
@@ -194,9 +189,9 @@ func writePayload(w io.Writer, m map[string]interface{}, tagType int64) error {
 				return JsonParseError{"Error writing byte array length", err}
 			}
 			for _, value := range values {
-				if i, err := value.(json.Number).Int64(); err == nil {
+				if i, ok := value.(float64); ok {
 					if i < math.MinInt8 || i > math.MaxInt8 {
-						return JsonParseError{fmt.Sprintf("%d is out of range for Byte in tag 7 - Byte Array", i), nil}
+						return JsonParseError{fmt.Sprintf("%v is out of range for Byte in tag 7 - Byte Array", i), nil}
 					}
 					err = binary.Write(w, byteOrder, int8(i))
 					if err != nil {
@@ -225,9 +220,9 @@ func writePayload(w io.Writer, m map[string]interface{}, tagType int64) error {
 	case 9:
 		// important: tagListType needs to be in scope to be passed to writePayload
 		// := were keeping it in a lower scope and zeroing it out.
-		var tagListType int64
+		var tagListType float64
 		if listMap, ok := m["value"].(map[string]interface{}); ok {
-			if tagListType, err = listMap["tagListType"].(json.Number).Int64(); err == nil {
+			if tagListType, ok = listMap["tagListType"].(float64); ok {
 				err = binary.Write(w, byteOrder, byte(tagListType))
 				if err != nil {
 					return JsonParseError{"While writing tag 9 list type", err}
@@ -283,9 +278,9 @@ func writePayload(w io.Writer, m map[string]interface{}, tagType int64) error {
 				return JsonParseError{"Error writing int32 array length", err}
 			}
 			for _, value := range values {
-				if i, err := value.(json.Number).Int64(); err == nil {
+				if i, ok := value.(float64); ok {
 					if i < math.MinInt32 || i > math.MaxInt32 {
-						return JsonParseError{fmt.Sprintf("%d is out of range for Int in tag 11 - Int Array", i), nil}
+						return JsonParseError{fmt.Sprintf("%v is out of range for Int in tag 11 - Int Array", i), nil}
 					}
 					err = binary.Write(w, byteOrder, int32(i))
 					if err != nil {
@@ -307,16 +302,16 @@ func writePayload(w io.Writer, m map[string]interface{}, tagType int64) error {
 			for _, value := range values {
 				if int64Map, ok := value.(map[string]interface{}); ok {
 					var nbtLong NbtLong
-					var vl, vm int64
-					if vl, err = int64Map["valueLeast"].(json.Number).Int64(); err != nil {
+					var vl, vm float64
+					if vl, ok = int64Map["valueLeast"].(float64); !ok {
 						return JsonParseError{fmt.Sprintf("Error reading valueLeast of '%v'", int64Map["valueLeast"]), nil}
 					}
 					nbtLong.ValueLeast = uint32(vl)
-					if vm, err = int64Map["valueMost"].(json.Number).Int64(); err != nil {
+					if vm, ok = int64Map["valueMost"].(float64); !ok {
 						return JsonParseError{fmt.Sprintf("Error reading valueMost of '%v'", int64Map["valueMost"]), nil}
 					}
 					nbtLong.ValueMost = uint32(vm)
-					// if i, err := value.(json.Number).Int64(); err == nil {
+					// if i, ok := value.(float64); ok {
 					err = binary.Write(w, byteOrder, int64(intPairToLong(nbtLong)))
 					if err != nil {
 						return JsonParseError{"Error writing element of int64 array", err}
