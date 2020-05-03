@@ -25,7 +25,7 @@ USAGE:
    nbt2json.exe [global options] command [command options] [arguments...]
 
 VERSION:
-   0.4.0-alpha
+   0.4.0
 
 AUTHOR:
    Jim Nelson <jim@jimnelson.us>
@@ -41,12 +41,58 @@ GLOBAL OPTIONS:
    --in FILE, -i FILE             Input FILE path (default: "-")
    --out FILE, -o FILE            Output FILE path (default: "-")
    --yaml, --yml, -y              Use YAML instead of JSON (default: false)
+   --long-as-string, -l           If set, nbt long values will be a string instead of uint32 pair (default: false)
    --skip NUM                     Skip NUM bytes of NBT input. For Bedrock's level.dat, use --skip 8 to bypass header (default: 0)
    --help, -h                     show help (default: false)
    --version, -v                  print the version (default: false)
 
 COPYRIGHT:
    (c) 2018, 2019, 2020 Jim Nelson
+```
+
+## JSON format notes
+
+The JSON document should be an object with an `"nbt"` field which is an array.
+Objects in the array represent one tag and will typically have tagType, name,
+and value fields. A typical Minecraft NBT will have one compound tag with a
+number of other tags inside that one. This converter needs at least one tag.
+
+Many JSON libraries cannot properly handle a 64-bit integer, so nbt2json handles
+the long tag in one of two special ways for portability and compatibility.
+
+By default it presents valueLeast and valueMost unsigned 32-bit integers.
+valueMost is the most significant 32 bits, so it should be rolled bitwise to the
+left 32 bits in a 64-bit space and added (or bitwise 'or'ed) to valueLeast to
+reassemble the 64-bit long singed integer. Here is an example:
+
+```json
+{
+  "nbt": [
+    {
+      "tagType": 4,
+      "name": "LongAsUint32PairExample",
+      "value": {
+        "valueLeast": 4294967295,
+        "valueMost": 2147483647
+      }
+    }
+  ]
+}
+```
+
+Alternately it can turn the 64-bit integer into a string. This would be easier
+to edit by hand in a text editor. Example:
+
+```json
+{
+  "nbt": [
+    {
+      "tagType": 4,
+      "name": "LongAsStringExample",
+      "value": "9223372036854775807"
+    }
+  ]
+}
 ```
 
 ## Dev notes
@@ -58,7 +104,7 @@ COPYRIGHT:
 - The Json2Nbt function uses an `interface{}` and encodes based on the tagType fields. I had originally hoped to Marshal and Unmarshal to and from JSON and NBT, but my goal was to export to JSON, edit and then reencode. This way the struct doesn't have to match the data schema.
 - My main motivation for this project is to convert to/from JSON and use any JSON editor to modify Minecraft PE data with [McpeTool](https://github.com/midnightfreddie/McpeTool), and to keep the read/write primitives in Go code while letting a client browser manage any validation to avoid having to re-release the read/write tools every time Minecraft changes formats.
 
-### Exported Go Functions
+### Exported Go functions
 
 - **Nbt2Yaml** converts uncompressed NBT byte array to YAML byte array
 
@@ -80,8 +126,16 @@ COPYRIGHT:
 
         func UseJavaEncoding()
 
-- **UseBedrockEncoding** sets nbt encoding/decoding to little-endian to match Minecraft Bedrock Edition
+- **UseBedrockEncoding** sets nbt encoding/decoding to little-endian to match Minecraft Bedrock Edition (default)
 
         func UseBedrockEncoding()
+
+- **UseLongAsString** sets json output for nbt long tags to numbers in strings
+
+        func UseLongAsString()
+
+- **UseLongAsUint32Pair** sets json output for nbt long tags to a uint32 pair (default, needed for json portability)
+
+        func UseLongAsUint32Pair()
 
 Other exports of possible interest are in common.go.
