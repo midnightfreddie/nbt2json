@@ -1,3 +1,28 @@
+## v0.4.0-alpha
+
+Many breaking changes!
+
+For everyone:
+
+- NBT Long values are now stored as valueLeast & valueMost 32-bit unsigned
+integer pairs in JSON. This is to prevent conversion issues across various
+languages' JSON libaries.
+
+For utility executable users:
+
+- Some parameters have been removed or renamed
+  - Since Bedrock is default, all the little-endian parameters are gone
+  - `--json2nbt`, `--big`, and `--pc` were removed, but their aliases remain
+  - Command line library has been updated to the latest version
+
+For devs:
+
+- byteOrder arguments are gone from all functions
+- Use `UseJavaEncoding()` if you need big-endian / Java Edition encoding.
+`UseBedrockEncoding()` is set by default, but you can call it to switch back if
+you switched to Java previously.
+- Go tests are more thorough
+
 ## v0.3.4
 
 This version has no data differences from v.0.3.3. It just has improved error
