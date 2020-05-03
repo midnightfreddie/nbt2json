@@ -44,11 +44,11 @@ func main() {
 			Destination: &comment,
 		},
 		cli.BoolTFlag{
-			Name:  "little-endian, little, mcpe, l",
+			Name:  "little-endian, bedrock, l",
 			Usage: "For Minecraft Bedrock Edition (Pocket and Windows 10) (default)",
 		},
 		cli.BoolFlag{
-			Name:  "big-endian, big, java, pc, b",
+			Name:  "big-endian, java, b",
 			Usage: "For Minecraft Java Edition (like most other NBT tools)",
 		},
 		cli.StringFlag{
