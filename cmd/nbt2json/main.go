@@ -70,6 +70,11 @@ func main() {
 			Aliases: []string{"yml", "y"},
 			Usage:   "Use YAML instead of JSON",
 		},
+		&cli.BoolFlag{
+			Name:    "long-as-string",
+			Aliases: []string{"l"},
+			Usage:   "If set, nbt long values will be a string instead of uint32 pair",
+		},
 		&cli.IntFlag{
 			Name:        "skip",
 			Value:       0,
@@ -82,6 +87,11 @@ func main() {
 			nbt2json.UseJavaEncoding()
 		} else {
 			nbt2json.UseBedrockEncoding()
+		}
+		if c.String("long-as-string") == "true" {
+			nbt2json.UseLongAsString()
+		} else {
+			nbt2json.UseLongAsUint32Pair()
 		}
 
 		var inData, outData []byte

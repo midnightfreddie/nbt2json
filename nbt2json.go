@@ -157,7 +157,11 @@ func getPayload(r *bytes.Reader, tagType byte) (interface{}, error) {
 		if err != nil {
 			return nil, NbtParseError{"Reading int64", err}
 		}
-		output = longToIntPair(i)
+		if longAsString {
+			output = fmt.Sprintf("%d", i)
+		} else {
+			output = longToIntPair(i)
+		}
 	case 5:
 		var f float32
 		err = binary.Read(r, byteOrder, &f)

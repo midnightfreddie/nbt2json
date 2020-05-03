@@ -27,6 +27,19 @@ func UseBedrockEncoding() {
 	byteOrder = binary.LittleEndian
 }
 
+// If longAsString is true, nbt long (int64) will be a string of the number instead of a valueLeast/valueMost uint32 pair
+var longAsString = false
+
+// UseLongAsString will make nbt long values as string numbers in the json/yaml
+func UseLongAsString() {
+	longAsString = true
+}
+
+// UseLongAsUint32Pair will make nbt long values as valueLeast/valueMost uint32 pairs in the json
+func UseLongAsUint32Pair() {
+	longAsString = false
+}
+
 // NbtParseError is when the nbt data does not match an expected pattern. Pass it message string and downstream error
 type NbtParseError struct {
 	s string
