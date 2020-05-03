@@ -11,19 +11,18 @@ import (
 	"compress/gzip"
 
 	"github.com/midnightfreddie/nbt2json"
-	"github.com/urfave/cli"
+	"github.com/urfave/cli/v2"
 )
 
 func main() {
 	var inFile, outFile, comment string
-	var byteOrder binary.ByteOrder
 	var skipBytes int
 	app := cli.NewApp()
 	app.Name = "NBT to JSON"
 	app.Version = nbt2json.Version
 	app.Compiled = time.Now()
-	app.Authors = []cli.Author{
-		cli.Author{
+	app.Authors = []*cli.Author{
+		&cli.Author{
 			Name:  "Jim Nelson",
 			Email: "jim@jimnelson.us",
 		},
@@ -31,44 +30,52 @@ func main() {
 	app.Copyright = "(c) 2018, 2019, 2020 Jim Nelson"
 	app.Usage = "Converts NBT-encoded data to JSON | " + nbt2json.Nbt2JsonUrl
 	app.Flags = []cli.Flag{
-		cli.BoolFlag{
-			Name:  "reverse, json2nbt, r",
-			Usage: "Convert JSON to NBT instead",
+		&cli.BoolFlag{
+			Name:    "reverse",
+			Aliases: []string{"r"},
+			Usage:   "Convert JSON to NBT instead",
 		},
-		cli.BoolFlag{
-			Name:  "gzip, z",
-			Usage: "Compress output with gzip",
+		&cli.BoolFlag{
+			Name:    "gzip",
+			Aliases: []string{"z"},
+			Usage:   "Compress output with gzip",
 		},
-		cli.StringFlag{
-			Name:        "comment, c",
+		&cli.StringFlag{
+			Name:        "comment",
+			Aliases:     []string{"c"},
 			Usage:       "Add `COMMENT` to json or yaml output, use quotes if contains white space",
 			Destination: &comment,
 		},
-		cli.BoolTFlag{
-			Name:  "little-endian, little, mcpe, l",
-			Usage: "For Minecraft Bedrock Edition (Pocket and Windows 10) (default)",
+		&cli.BoolFlag{
+			Name:    "big-endian",
+			Aliases: []string{"java", "b"},
+			Usage:   "Use for Minecraft Java Edition (like most other NBT tools)",
 		},
-		cli.BoolFlag{
-			Name:  "big-endian, big, java, pc, b",
-			Usage: "For Minecraft Java Edition (like most other NBT tools)",
-		},
-		cli.StringFlag{
-			Name:        "in, i",
+		&cli.StringFlag{
+			Name:        "in",
 			Value:       "-",
+			Aliases:     []string{"i"},
 			Usage:       "Input `FILE` path",
 			Destination: &inFile,
 		},
-		cli.StringFlag{
-			Name:        "out, o",
+		&cli.StringFlag{
+			Name:        "out",
 			Value:       "-",
+			Aliases:     []string{"o"},
 			Usage:       "Output `FILE` path",
 			Destination: &outFile,
 		},
-		cli.BoolFlag{
-			Name:  "yaml, yml, y",
-			Usage: "Use YAML instead of JSON",
+		&cli.BoolFlag{
+			Name:    "yaml",
+			Aliases: []string{"yml", "y"},
+			Usage:   "Use YAML instead of JSON",
 		},
-		cli.IntFlag{
+		&cli.BoolFlag{
+			Name:    "long-as-string",
+			Aliases: []string{"l"},
+			Usage:   "If set, nbt long values will be a string instead of uint32 pair",
+		},
+		&cli.IntFlag{
 			Name:        "skip",
 			Value:       0,
 			Usage:       "Skip `NUM` bytes of NBT input. For Bedrock's level.dat, use --skip 8 to bypass header",
@@ -77,9 +84,14 @@ func main() {
 	}
 	app.Action = func(c *cli.Context) error {
 		if c.String("big-endian") == "true" {
-			byteOrder = nbt2json.Java
+			nbt2json.UseJavaEncoding()
 		} else {
-			byteOrder = nbt2json.Bedrock
+			nbt2json.UseBedrockEncoding()
+		}
+		if c.String("long-as-string") == "true" {
+			nbt2json.UseLongAsString()
+		} else {
+			nbt2json.UseLongAsUint32Pair()
 		}
 
 		var inData, outData []byte
@@ -99,12 +111,12 @@ func main() {
 
 		if c.String("reverse") == "true" {
 			if c.String("yaml") == "true" {
-				outData, err = nbt2json.Yaml2Nbt(inData, byteOrder)
+				outData, err = nbt2json.Yaml2Nbt(inData)
 				if err != nil {
 					return cli.NewExitError(err, 1)
 				}
 			} else {
-				outData, err = nbt2json.Json2Nbt(inData, byteOrder)
+				outData, err = nbt2json.Json2Nbt(inData)
 				if err != nil {
 					return cli.NewExitError(err, 1)
 				}
@@ -125,12 +137,12 @@ func main() {
 				inData = uncompressed
 			}
 			if c.String("yaml") == "true" {
-				outData, err = nbt2json.Nbt2Yaml(inData[skipBytes:], byteOrder, comment)
+				outData, err = nbt2json.Nbt2Yaml(inData[skipBytes:], comment)
 				if err != nil {
 					return cli.NewExitError(err, 1)
 				}
 			} else {
-				outData, err = nbt2json.Nbt2Json(inData[skipBytes:], byteOrder, comment)
+				outData, err = nbt2json.Nbt2Json(inData[skipBytes:], comment)
 				if err != nil {
 					return cli.NewExitError(err, 1)
 				}
