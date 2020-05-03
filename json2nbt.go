@@ -150,13 +150,16 @@ func writePayload(w io.Writer, m map[string]interface{}, tagType float64) error 
 			nbtLong.ValueMost = uint32(vm)
 			err = binary.Write(w, byteOrder, int64(intPairToLong(nbtLong)))
 			if err != nil {
-				return JsonParseError{"Error writing int64 (from uint32 pair) payload", err}
+				return JsonParseError{"Error writing int64 (from uint32 pair) payload:", err}
 			}
 		} else if int64String, ok := m["value"].(string); ok {
 			i, err := strconv.ParseInt(int64String, 10, 64)
+			if err != nil {
+				return JsonParseError{"Error converting long as string payload:", err}
+			}
 			err = binary.Write(w, byteOrder, i)
 			if err != nil {
-				return JsonParseError{"Error writing int64 (from string) payload", err}
+				return JsonParseError{"Error writing int64 (from string) payload:", err}
 			}
 			if err != nil {
 				return JsonParseError{fmt.Sprintf("Tag 4 Long value string field '%s' not an integer", int64String), err}
@@ -336,6 +339,9 @@ func writePayload(w io.Writer, m map[string]interface{}, tagType float64) error 
 					}
 				} else if int64String, ok := value.(string); ok {
 					i, err := strconv.ParseInt(int64String, 10, 64)
+					if err != nil {
+						return JsonParseError{"Error converting long array element as string payload:", err}
+					}
 					err = binary.Write(w, byteOrder, i)
 					if err != nil {
 						return JsonParseError{"Error writing int64 array element (from string) payload", err}

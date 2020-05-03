@@ -177,6 +177,7 @@ func TestRoundTrip(t *testing.T) {
 
 // TestValueConversions checks nbt value versus input json value
 // TODO: Test array tags
+// TODO: Lots of very repetitive code in the range loops; must be a way to consolidate it
 func TestValueConversions(t *testing.T) {
 	UseBedrockEncoding()
 
@@ -196,17 +197,17 @@ func TestValueConversions(t *testing.T) {
 	for _, tag := range intTags {
 		nbtData, err := Json2Nbt([]byte(fmt.Sprintf(testNumberRangeJsonTemplate, tag.tagType, "", tag.value)))
 		if err != nil {
-			t.Error("Error in json conversion during value tests", err.Error())
+			t.Error("Error in json conversion during value tests:", err.Error())
 		} else if !bytes.Equal(nbtData, tag.nbt) {
 			t.Error(fmt.Sprintf("Tag type %d value %d, expected \n%s\n, got \n%s\n", tag.tagType, tag.value, hex.Dump(tag.nbt), hex.Dump(nbtData)))
 		} else {
 			jsonData, err := Nbt2Json(nbtData, "")
 			if err != nil {
-				t.Error("Error in nbt re-conversion during value tests", err.Error())
+				t.Error("Error in nbt re-conversion during value tests:", err.Error())
 			} else {
 				nbtData, err = Json2Nbt(jsonData)
 				if err != nil {
-					t.Error("Error in json re-conversion during value tests", err.Error())
+					t.Error("Error in json re-conversion during value tests:", err.Error())
 				} else if !bytes.Equal(nbtData, tag.nbt) {
 					t.Error(fmt.Sprintf("Error on round-trip value reconversion - tag type %d value %d, expected \n%s\n, got \n%s\n", tag.tagType, tag.value, hex.Dump(tag.nbt), hex.Dump(nbtData)))
 				}
@@ -230,17 +231,17 @@ func TestValueConversions(t *testing.T) {
 	for _, tag := range floatTags {
 		nbtData, err := Json2Nbt([]byte(fmt.Sprintf(testNumberRangeJsonTemplate, tag.tagType, "", tag.value)))
 		if err != nil {
-			t.Error("Error in json conversion during value tests", err.Error())
+			t.Error("Error in json conversion during value tests:", err.Error())
 		} else if !bytes.Equal(nbtData, tag.nbt) {
 			t.Error(fmt.Sprintf("Tag type %d value %g, expected \n%s\n, got \n%s\n", tag.tagType, tag.value, hex.Dump(tag.nbt), hex.Dump(nbtData)))
 		} else {
 			jsonData, err := Nbt2Json(nbtData, "")
 			if err != nil {
-				t.Error("Error in nbt re-conversion during value tests", err.Error())
+				t.Error("Error in nbt re-conversion during value tests:", err.Error())
 			} else {
 				nbtData, err = Json2Nbt(jsonData)
 				if err != nil {
-					t.Error("Error in json re-conversion during value tests", err.Error())
+					t.Error("Error in json re-conversion during value tests:", err.Error())
 				} else if !bytes.Equal(nbtData, tag.nbt) {
 					t.Error(fmt.Sprintf("Error on round-trip value reconversion - tag type %d value %g, expected \n%s\n, got \n%s\n", tag.tagType, tag.value, hex.Dump(tag.nbt), hex.Dump(nbtData)))
 				}
@@ -263,23 +264,53 @@ func TestValueConversions(t *testing.T) {
 		value = fmt.Sprintf(testLongTemplate, tag.valueLeast, tag.valueMost)
 		nbtData, err := Json2Nbt([]byte(fmt.Sprintf(testNumberRangeJsonTemplate, tag.tagType, "", value)))
 		if err != nil {
-			t.Error("Error in json conversion during value tests", err.Error())
+			t.Error("Error in json conversion during value tests:", err.Error())
 		} else if !bytes.Equal(nbtData, tag.nbt) {
 			t.Error(fmt.Sprintf("Tag type %d value %v, expected \n%s\n, got \n%s\n", tag.tagType, value, hex.Dump(tag.nbt), hex.Dump(nbtData)))
 		} else {
 			jsonData, err := Nbt2Json(nbtData, "")
 			if err != nil {
-				t.Error("Error in nbt re-conversion during value tests", err.Error())
+				t.Error("Error in nbt re-conversion during value tests:", err.Error())
 			} else {
 				nbtData, err = Json2Nbt(jsonData)
 				if err != nil {
-					t.Error("Error in json re-conversion during value tests", err.Error())
+					t.Error("Error in json re-conversion during value tests:", err.Error())
 				} else if !bytes.Equal(nbtData, tag.nbt) {
 					t.Error(fmt.Sprintf("Error on round-trip value reconversion - tag type %d value %v, expected \n%s\n, got \n%s\n", tag.tagType, value, hex.Dump(tag.nbt), hex.Dump(nbtData)))
 				}
 			}
 		}
 	}
+
+	longAsStringTags := []struct {
+		tagType int64
+		value   string
+		nbt     []byte
+	}{
+		{4, "\"9223372036854775807\"", []byte{4, 0, 0, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x7f}},
+		{4, "\"-9223372036854775808\"", []byte{4, 0, 0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x80}},
+	}
+	for _, tag := range longAsStringTags {
+		nbtData, err := Json2Nbt([]byte(fmt.Sprintf(testNumberRangeJsonTemplate, tag.tagType, "", tag.value)))
+		if err != nil {
+			t.Error("Error in json conversion during value tests:", err.Error())
+		} else if !bytes.Equal(nbtData, tag.nbt) {
+			t.Error(fmt.Sprintf("Tag type %d value %v, expected \n%s\n, got \n%s\n", tag.tagType, tag.value, hex.Dump(tag.nbt), hex.Dump(nbtData)))
+		} else {
+			jsonData, err := Nbt2Json(nbtData, "")
+			if err != nil {
+				t.Error("Error in nbt re-conversion during value tests:", err.Error())
+			} else {
+				nbtData, err = Json2Nbt(jsonData)
+				if err != nil {
+					t.Error("Error in json re-conversion during value tests:", err.Error())
+				} else if !bytes.Equal(nbtData, tag.nbt) {
+					t.Error(fmt.Sprintf("Error on round-trip value reconversion - tag type %d value %v, expected \n%s\n, got \n%s\n", tag.tagType, tag.value, hex.Dump(tag.nbt), hex.Dump(nbtData)))
+				}
+			}
+		}
+	}
+
 }
 
 // TestOutOfRange tries to offer input out of range of the tag type
@@ -319,6 +350,21 @@ func TestOutOfRange(t *testing.T) {
 		_, err := Json2Nbt([]byte(fmt.Sprintf(testNumberRangeJsonTemplate, tag.tagType, "", tag.value)))
 		if err == nil {
 			t.Error(fmt.Sprintf("Tag type %d value %g failed to throw out of range error", tag.tagType, tag.value))
+		}
+	}
+
+	longAsStringTags := []struct {
+		tagType int64
+		value   string
+	}{
+		{4, "\"9223372036854775808\""},
+		{4, "\"-9223372036854775809\""},
+	}
+
+	for _, tag := range longAsStringTags {
+		_, err := Json2Nbt([]byte(fmt.Sprintf(testNumberRangeJsonTemplate, tag.tagType, "", tag.value)))
+		if err == nil {
+			t.Error(fmt.Sprintf("Tag type %d value %s failed to throw out of range error", tag.tagType, tag.value))
 		}
 	}
 }
