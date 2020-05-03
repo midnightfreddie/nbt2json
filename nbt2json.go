@@ -267,6 +267,7 @@ func getPayload(r *bytes.Reader, tagType byte) (interface{}, error) {
 		output = intArray
 	case 12:
 		var longArray []NbtLong
+		var longStringArray []string
 		var numRecords, oneInt int64
 		err := binary.Read(r, byteOrder, &numRecords)
 		if err != nil {
@@ -278,8 +279,14 @@ func getPayload(r *bytes.Reader, tagType byte) (interface{}, error) {
 				return nil, NbtParseError{"Reading long in long array tag", err}
 			}
 			longArray = append(longArray, longToIntPair(i))
+			longStringArray = append(longStringArray, fmt.Sprintf("%d", i))
 		}
-		output = longArray
+		if longAsString {
+			output = longStringArray
+		} else {
+			output = longArray
+		}
+
 	default:
 		return nil, NbtParseError{fmt.Sprintf("TagType %d not recognized", tagType), nil}
 	}

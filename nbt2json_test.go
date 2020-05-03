@@ -30,15 +30,20 @@ const testJson = `{
           "name": "TestInt",
           "value": 2147483647
         },
-				{
-					"tagType": 4,
-					"name": "",
-					"value": {
-						"valueLeast": 4294967295,
-						"valueMost": 2147483647
-					}
-				},
-				{
+		{
+			"tagType": 4,
+			"name": "",
+			"value": {
+				"valueLeast": 4294967295,
+				"valueMost": 2147483647
+			}
+		},
+        {
+			"tagType": 4,
+			"name": "TestLongAsString",
+			"value": "9223372036854775807"
+		  },
+		  {
           "tagType": 5,
           "name": "TestFloat",
           "value": 1.234567e+38
@@ -49,13 +54,13 @@ const testJson = `{
           "value": 1.23456789012345e+307
         },
         {
-          "tagType": 7,
-          "name": "TestByteArray",
-          "value": [
-						0,
-						-128,
-						127
-					]
+			"tagType": 7,
+			"name": "TestByteArray",
+			"value": [
+				0,
+				-128,
+				127
+			]
         },
         {
           "tagType": 8,
@@ -95,6 +100,7 @@ const testJson = `{
 							"valueLeast": 4294967295,
 							"valueMost": 2147483647
 						},
+						"9223372036854775807",
 						{
 							"valueLeast": 0,
 							"valueMost": -2147483648
