@@ -6,7 +6,7 @@ import (
 )
 
 // Version is the json document's nbt2JsonVersion:
-const Version = "0.3.4"
+const Version = "0.4.0"
 
 // Nbt2JsonUrl is inserted in the json document as nbt2JsonUrl
 const Nbt2JsonUrl = "https://github.com/midnightfreddie/nbt2json"
@@ -14,11 +14,31 @@ const Nbt2JsonUrl = "https://github.com/midnightfreddie/nbt2json"
 // Name is the json document's name:
 var Name = "Named Binary Tag to JSON"
 
-// Bedrock is for Bedrock Edition (little endian NBT encoding); unable to make const, but **do not alter**
-var Bedrock = binary.LittleEndian
+// Used by all converters; change with UseJavaEncoding() or UseBedrockEncoding()
+var byteOrder = binary.ByteOrder(binary.LittleEndian)
 
-// Java is for Java Edition (big endian NBT encoding); unable to make const, but **do not alter**
-var Java = binary.BigEndian
+// UseJavaEncoding sets the module to decode/encode from/to big endian NBT for Minecraft Java Edition
+func UseJavaEncoding() {
+	byteOrder = binary.BigEndian
+}
+
+// UseBedrockEncoding sets the module to decode/encode from/to little endian NBT for Minecraft Bedrock Edition
+func UseBedrockEncoding() {
+	byteOrder = binary.LittleEndian
+}
+
+// If longAsString is true, nbt long (int64) will be a string of the number instead of a valueLeast/valueMost uint32 pair
+var longAsString = false
+
+// UseLongAsString will make nbt long values as string numbers in the json/yaml
+func UseLongAsString() {
+	longAsString = true
+}
+
+// UseLongAsUint32Pair will make nbt long values as valueLeast/valueMost uint32 pairs in the json
+func UseLongAsUint32Pair() {
+	longAsString = false
+}
 
 // NbtParseError is when the nbt data does not match an expected pattern. Pass it message string and downstream error
 type NbtParseError struct {
@@ -33,12 +53,6 @@ func (e NbtParseError) Error() string {
 	}
 	return fmt.Sprintf("Error parsing NBT: %s%s", e.s, s)
 }
-
-// NOTE: Although this file is named "common.go", the above values are only
-// used in nbt2json.go and the below in json2nbt.go. I mainly wanted to
-// separate Version to a sensible place and threw in the other potentially-
-// interesting values and exported structs. The other non-function exports are
-// for marshalling via reflect and not because they need to be used by client code.
 
 // JsonParseError is when the json data does not match an expected pattern. Pass it message string and downstream error
 type JsonParseError struct {

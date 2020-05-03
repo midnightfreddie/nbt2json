@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/binary"
 	"encoding/json"
+	"fmt"
 	"math"
 	"time"
 
@@ -33,9 +34,30 @@ type NbtTagList struct {
 	List        []interface{} `json:"list"`
 }
 
+// NbtLong stores a 64-bit int into two 32-bit values for json portability. ValueMost are the high 32 bits and ValueLeast are the low 32 bits.
+//   using uint32s to avoid Go trying to outsmart us on "negative" int32s
+type NbtLong struct {
+	ValueLeast uint32 `json:"valueLeast"`
+	ValueMost  uint32 `json:"valueMost"`
+}
+
+// Turns an int64 (nbt long) into a valueLeast/valueMost json pair
+func longToIntPair(i int64) NbtLong {
+	var nbtLong NbtLong
+	nbtLong.ValueLeast = uint32(i & 0xffffffff)
+	nbtLong.ValueMost = uint32(i >> 32)
+	return nbtLong
+}
+
+func intPairToLong(nbtLong NbtLong) int64 {
+	var i int64
+	i = int64(nbtLong.ValueLeast) | (int64(nbtLong.ValueMost) << 32)
+	return i
+}
+
 // Nbt2Yaml converts uncompressed NBT byte array to YAML byte array
-func Nbt2Yaml(b []byte, byteOrder binary.ByteOrder, comment string) ([]byte, error) {
-	jsonOut, err := Nbt2Json(b, byteOrder, comment)
+func Nbt2Yaml(b []byte, comment string) ([]byte, error) {
+	jsonOut, err := Nbt2Json(b, comment)
 	if err != nil {
 		return nil, err
 	}
@@ -47,7 +69,7 @@ func Nbt2Yaml(b []byte, byteOrder binary.ByteOrder, comment string) ([]byte, err
 }
 
 // Nbt2Json converts uncompressed NBT byte array to JSON byte array
-func Nbt2Json(b []byte, byteOrder binary.ByteOrder, comment string) ([]byte, error) {
+func Nbt2Json(b []byte, comment string) ([]byte, error) {
 	var nbtJson NbtJson
 	nbtJson.Name = Name
 	nbtJson.Version = Version
@@ -57,7 +79,7 @@ func Nbt2Json(b []byte, byteOrder binary.ByteOrder, comment string) ([]byte, err
 	buf := bytes.NewReader(b)
 	// var nbtJson.nbt []*json.RawMessage
 	for buf.Len() > 0 {
-		element, err := getTag(buf, byteOrder)
+		element, err := getTag(buf)
 		if err != nil {
 			return nil, err
 		}
@@ -72,7 +94,7 @@ func Nbt2Json(b []byte, byteOrder binary.ByteOrder, comment string) ([]byte, err
 }
 
 // getTag broken out form Nbt2Json to allow recursion with reader but public input is []byte
-func getTag(r *bytes.Reader, byteOrder binary.ByteOrder) ([]byte, error) {
+func getTag(r *bytes.Reader) ([]byte, error) {
 	var data NbtTag
 	err := binary.Read(r, byteOrder, &data.TagType)
 	if err != nil {
@@ -89,11 +111,11 @@ func getTag(r *bytes.Reader, byteOrder binary.ByteOrder) ([]byte, error) {
 		name := make([]byte, nameLen)
 		err = binary.Read(r, byteOrder, &name)
 		if err != nil {
-			return nil, NbtParseError{"Reading Name - is little/big endian byte order set correctly?", err}
+			return nil, NbtParseError{fmt.Sprintf("Reading Name - is UseJavaEncoding or UseBedrockEncoding set correctly? Name length decoded is %d", nameLen), err}
 		}
 		data.Name = string(name[:])
 	}
-	data.Value, err = getPayload(r, byteOrder, data.TagType)
+	data.Value, err = getPayload(r, data.TagType)
 	if err != nil {
 		return nil, err
 	}
@@ -102,7 +124,7 @@ func getTag(r *bytes.Reader, byteOrder binary.ByteOrder) ([]byte, error) {
 }
 
 // Gets the tag payload. Had to break this out from the main function to allow tag list recursion
-func getPayload(r *bytes.Reader, byteOrder binary.ByteOrder, tagType byte) (interface{}, error) {
+func getPayload(r *bytes.Reader, tagType byte) (interface{}, error) {
 	var output interface{}
 	var err error
 	switch tagType {
@@ -135,7 +157,11 @@ func getPayload(r *bytes.Reader, byteOrder binary.ByteOrder, tagType byte) (inte
 		if err != nil {
 			return nil, NbtParseError{"Reading int64", err}
 		}
-		output = i
+		if longAsString {
+			output = fmt.Sprintf("%d", i)
+		} else {
+			output = longToIntPair(i)
+		}
 	case 5:
 		var f float32
 		err = binary.Read(r, byteOrder, &f)
@@ -194,7 +220,7 @@ func getPayload(r *bytes.Reader, byteOrder binary.ByteOrder, tagType byte) (inte
 			return nil, NbtParseError{"Reading list tag length", err}
 		}
 		for i := int32(1); i <= numRecords; i++ {
-			payload, err := getPayload(r, byteOrder, tagList.TagListType)
+			payload, err := getPayload(r, tagList.TagListType)
 			if err != nil {
 				return nil, NbtParseError{"Reading list tag item", err}
 			}
@@ -212,7 +238,7 @@ func getPayload(r *bytes.Reader, byteOrder binary.ByteOrder, tagType byte) (inte
 			if err != nil {
 				return nil, NbtParseError{"seeking back one", err}
 			}
-			tag, err := getTag(r, byteOrder)
+			tag, err := getTag(r)
 			if err != nil {
 				return nil, NbtParseError{"compound: reading a child tag", err}
 			}
@@ -240,7 +266,8 @@ func getPayload(r *bytes.Reader, byteOrder binary.ByteOrder, tagType byte) (inte
 		}
 		output = intArray
 	case 12:
-		var longArray []int64
+		var longArray []NbtLong
+		var longStringArray []string
 		var numRecords, oneInt int64
 		err := binary.Read(r, byteOrder, &numRecords)
 		if err != nil {
@@ -251,11 +278,17 @@ func getPayload(r *bytes.Reader, byteOrder binary.ByteOrder, tagType byte) (inte
 			if err != nil {
 				return nil, NbtParseError{"Reading long in long array tag", err}
 			}
-			longArray = append(longArray, oneInt)
+			longArray = append(longArray, longToIntPair(i))
+			longStringArray = append(longStringArray, fmt.Sprintf("%d", i))
 		}
-		output = longArray
+		if longAsString {
+			output = longStringArray
+		} else {
+			output = longArray
+		}
+
 	default:
-		return nil, NbtParseError{"TagType not recognized", nil}
+		return nil, NbtParseError{fmt.Sprintf("TagType %d not recognized", tagType), nil}
 	}
 	return output, nil
 }

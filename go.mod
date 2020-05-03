@@ -1,8 +1,8 @@
 module github.com/midnightfreddie/nbt2json
 
-go 1.14
+go 1.13
 
 require (
-	github.com/ghodss/yaml v1.0.0
-	github.com/urfave/cli v1.22.4
+	github.com/ghodss/yaml v1.0.1-0.20190212211648-25d852aebe32
+	github.com/urfave/cli/v2 v2.2.0
 )
