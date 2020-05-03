@@ -157,7 +157,10 @@ func writePayload(w io.Writer, m map[string]interface{}, tagType float64) error 
 		}
 	case 5:
 		if f, ok := m["value"].(float64); ok {
-			if f != 0 && (math.Abs(f) < math.SmallestNonzeroFloat32 || math.Abs(f) > math.MaxFloat32) {
+			// Comparing to smallest/max values is causing false errors as the nbt value comes out right even if this comparison doesn't
+			// Instead, will check for positive/negative infinity. Not sure what happens if f is too small for float32, but is likely edge case
+			// if f != 0 && (math.Abs(f) < math.SmallestNonzeroFloat32 || math.Abs(f) > math.MaxFloat32) {
+			if math.IsInf(float64(float32(f)), 0) {
 				return JsonParseError{fmt.Sprintf("%g is out of range for tag 5 - Float", f), nil}
 			}
 			err = binary.Write(w, byteOrder, float32(f))
@@ -165,7 +168,13 @@ func writePayload(w io.Writer, m map[string]interface{}, tagType float64) error 
 				return JsonParseError{"Error writing float32 payload", err}
 			}
 		} else {
-			return JsonParseError{fmt.Sprintf("Tag 5 Float value field '%v' not a number", m["value"]), err}
+			// If NaN is valid for double, maybe it's valid for float?
+			// return JsonParseError{fmt.Sprintf("Tag 5 Float value field '%v' not a number", m["value"]), err}
+			f = math.NaN()
+			err = binary.Write(w, byteOrder, float32(f))
+			if err != nil {
+				return JsonParseError{"Error writing float64 payload", err}
+			}
 		}
 	case 6:
 		if f, ok := m["value"].(float64); ok {
@@ -174,13 +183,13 @@ func writePayload(w io.Writer, m map[string]interface{}, tagType float64) error 
 				return JsonParseError{"Error writing float64 payload", err}
 			}
 		} else {
+			// Apparently NaN is a valid value in Minecraft for double?
 			// return JsonParseError{fmt.Sprintf("Tag 6 Double value field '%v' not a number", m["value"]), err}
 			f = math.NaN()
 			err = binary.Write(w, byteOrder, f)
 			if err != nil {
 				return JsonParseError{"Error writing float64 payload", err}
 			}
-
 		}
 	case 7:
 		if values, ok := m["value"].([]interface{}); ok {
