@@ -9,10 +9,6 @@ import (
 	"testing"
 )
 
-// NOTE: Only testing round-trips for consistency, but errors will still fail the test.
-
-// TODO: Add list/array types to test json
-
 const testJson = `{
   "nbt": [
     {
@@ -67,6 +63,18 @@ const testJson = `{
           "value": "This is a test string"
         },
 				{
+					"tagType": 9,
+					"name": "TestList",
+						"value": {
+							"tagListType": 3,
+							"list": [
+								0,
+								2147483647,
+								-2147483648
+							]
+						}
+				},
+				{
 					"tagType": 11,
 					"name": "TestIntArray",
 					"value": [
@@ -102,19 +110,6 @@ const testJson = `{
     }
   ]
 }`
-
-/*
-        {
-          "tagType": 7,
-          "name": "TestByteArray",
-          "value": 256
-        },
-				{
-					"tagType": 9,
-					"name": "TestList",
-					"value": 256
-				},
-*/
 
 const testNumberRangeJsonTemplate = `{
   "nbt": [
