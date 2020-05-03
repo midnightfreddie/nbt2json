@@ -53,10 +53,46 @@ const testJson = `{
           "value": 1.23456789012345e+307
         },
         {
+          "tagType": 7,
+          "name": "TestByteArray",
+          "value": [
+						0,
+						-128,
+						127
+					]
+        },
+        {
           "tagType": 8,
           "name": "TestString",
           "value": "This is a test string"
         },
+				{
+					"tagType": 11,
+					"name": "TestIntArray",
+					"value": [
+						0,
+						2147483647,
+						-2147483648
+					]
+				},
+				{
+					"tagType": 12,
+					"name": "TestLongArray",
+					"value": [
+						{
+							"valueLeast": 0,
+							"valueMost": 0
+						},
+						{
+							"valueLeast": 4294967295,
+							"valueMost": 2147483647
+						},
+						{
+							"valueLeast": 0,
+							"valueMost": -2147483648
+						}
+					]
+				},
         {
           "tagType": 0,
           "name": "",
@@ -78,16 +114,6 @@ const testJson = `{
 					"name": "TestList",
 					"value": 256
 				},
-				{
-					"tagType": 11,
-					"name": "TestIntArray",
-					"value": 256
-				},
-				{
-					"tagType": 12,
-					"name": "TestByteArray",
-					"value": 256
-				},
 */
 
 const testNumberRangeJsonTemplate = `{
@@ -105,6 +131,7 @@ const testLongTemplate = `{
 	"valueMost": %d
 }`
 
+// TestRoundTrip checks to be sure generated output matches, but it doesn't check values against the original input
 func TestRoundTrip(t *testing.T) {
 	h := sha1.New()
 
@@ -147,6 +174,7 @@ func TestRoundTrip(t *testing.T) {
 	}
 }
 
+// TestValueConversions checks nbt value versus input json value
 // TODO: Test array tags
 func TestValueConversions(t *testing.T) {
 	UseBedrockEncoding()
@@ -253,6 +281,7 @@ func TestValueConversions(t *testing.T) {
 	}
 }
 
+// TestOutOfRange tries to offer input out of range of the tag type
 // NOTE: Tested function should throw error to pass
 func TestOutOfRange(t *testing.T) {
 	intTags := []struct {

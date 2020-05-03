@@ -305,13 +305,24 @@ func writePayload(w io.Writer, m map[string]interface{}, tagType int64) error {
 				return JsonParseError{"Error writing int64 array length", err}
 			}
 			for _, value := range values {
-				if i, err := value.(json.Number).Int64(); err == nil {
-					err = binary.Write(w, byteOrder, int64(i))
+				if int64Map, ok := value.(map[string]interface{}); ok {
+					var nbtLong NbtLong
+					var vl, vm int64
+					if vl, err = int64Map["valueLeast"].(json.Number).Int64(); err != nil {
+						return JsonParseError{fmt.Sprintf("Error reading valueLeast of '%v'", int64Map["valueLeast"]), nil}
+					}
+					nbtLong.ValueLeast = uint32(vl)
+					if vm, err = int64Map["valueMost"].(json.Number).Int64(); err != nil {
+						return JsonParseError{fmt.Sprintf("Error reading valueMost of '%v'", int64Map["valueMost"]), nil}
+					}
+					nbtLong.ValueMost = uint32(vm)
+					// if i, err := value.(json.Number).Int64(); err == nil {
+					err = binary.Write(w, byteOrder, int64(intPairToLong(nbtLong)))
 					if err != nil {
 						return JsonParseError{"Error writing element of int64 array", err}
 					}
 				} else {
-					return JsonParseError{fmt.Sprintf("Tag Long Array element value field '%v' not an integer", value), err}
+					return JsonParseError{fmt.Sprintf("Tag Long Array element value field '%v' not an object", value), err}
 				}
 			}
 		} else {
