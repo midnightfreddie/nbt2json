@@ -24,7 +24,7 @@ func HelloDll() {
 //export Nbt2Json
 func Nbt2Json(byteArray unsafe.Pointer, length C.int) *C.char {
 	var goByteArray = C.GoBytes(byteArray, length)
-	jsonData, err := nbt2json.Nbt2Json(goByteArray, nbt2json.Bedrock, "")
+	jsonData, err := nbt2json.Nbt2Json(goByteArray, "")
 	if err != nil {
 		panic(err)
 	}
@@ -37,7 +37,7 @@ func Nbt2Json(byteArray unsafe.Pointer, length C.int) *C.char {
 //export Nbt2Yaml
 func Nbt2Yaml(byteArray unsafe.Pointer, length C.int) *C.char {
 	var goByteArray = C.GoBytes(byteArray, length)
-	jsonData, err := nbt2json.Nbt2Yaml(goByteArray, nbt2json.Bedrock, "")
+	jsonData, err := nbt2json.Nbt2Yaml(goByteArray, "")
 	if err != nil {
 		panic(err)
 	}
@@ -50,7 +50,7 @@ func Nbt2Yaml(byteArray unsafe.Pointer, length C.int) *C.char {
 func Json2Nbt(cString *C.char) {
 	var s string
 	s = C.GoString(cString)
-	nbtData, err := nbt2json.Json2Nbt([]byte(s), nbt2json.Bedrock)
+	nbtData, err := nbt2json.Json2Nbt([]byte(s))
 	if err != nil {
 		panic(err)
 	}
@@ -69,7 +69,7 @@ func Json2Nbt(cString *C.char) {
 func Yaml2Nbt(cString *C.char) unsafe.Pointer {
 	var s string
 	s = C.GoString(cString)
-	nbtData, err := nbt2json.Yaml2Nbt([]byte(s), nbt2json.Bedrock)
+	nbtData, err := nbt2json.Yaml2Nbt([]byte(s))
 	if err != nil {
 		panic(err)
 	}
