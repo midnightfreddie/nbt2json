@@ -224,8 +224,8 @@ func TestValueConversions(t *testing.T) {
 		valueMost  uint32
 		nbt        []byte
 	}{
-		{4, math.MaxInt32, 0xffffffff, []byte{4, 0, 0, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x7f}},
-		{4, 0x80000000, 0, []byte{4, 0, 0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x80}},
+		{4, 0xffffffff, math.MaxInt32, []byte{4, 0, 0, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x7f}},
+		{4, 0, 0x80000000, []byte{4, 0, 0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x80}},
 	}
 
 	for _, tag := range int64Tags {
@@ -294,6 +294,7 @@ func TestOutOfRange(t *testing.T) {
 func TestPrintThis(t *testing.T) {
 	var value string
 	value = fmt.Sprintf(testLongTemplate, 0, 0x80000000)
+	value = fmt.Sprintf(testLongTemplate, 0xffffffff, 0x7fffffff)
 	var json = fmt.Sprintf(testNumberRangeJsonTemplate, 4, "", value)
 	fmt.Println(json)
 	nbtData, err := Json2Nbt([]byte(json))

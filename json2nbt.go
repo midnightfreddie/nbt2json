@@ -142,8 +142,25 @@ func writePayload(w io.Writer, m map[string]interface{}, tagType int64) error {
 			return JsonParseError{fmt.Sprintf("Tag 3 Int value field '%v' not an integer", m["value"]), err}
 		}
 	case 4:
-		if o, ok := m["value"].(NbtLong); ok {
-			err = binary.Write(w, byteOrder, int64(intPairToLong(o)))
+		if int64Map, ok := m["value"].(map[string]interface{}); ok {
+			var nbtLong NbtLong
+			// var ok bool
+			var vl, vm int64
+			// fmt.Println(int64Map["valueLeast"])
+			// fmt.Printf("%T\n", int64Map["valueLeast"])
+			// fmt.Println(int64Map["valueMost"])
+			// if foo, err := int64Map["valueLeast"].(json.Number).Int64(); err == nil {
+			// 	fmt.Println("Yay", foo)
+			// }
+			if vl, err = int64Map["valueLeast"].(json.Number).Int64(); err != nil {
+				return JsonParseError{fmt.Sprintf("Error reading valueLeast of '%v'", int64Map["valueLeast"]), nil}
+			}
+			nbtLong.ValueLeast = uint32(vl)
+			if vm, err = int64Map["valueMost"].(json.Number).Int64(); err != nil {
+				return JsonParseError{fmt.Sprintf("Error reading valueMost of '%v'", int64Map["valueLeast"]), nil}
+			}
+			nbtLong.ValueMost = uint32(vm)
+			err = binary.Write(w, byteOrder, int64(intPairToLong(nbtLong)))
 			if err != nil {
 				return JsonParseError{"Error writing int64 payload", err}
 			}
