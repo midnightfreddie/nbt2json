@@ -51,14 +51,7 @@ func longToIntPair(i int64) NbtLong {
 
 func intPairToLong(nbtLong NbtLong) int64 {
 	var i int64
-	var temp int64
-	i = int64(nbtLong.ValueLeast)
-	temp = int64(nbtLong.ValueMost)
-	fmt.Println("vl", nbtLong.ValueLeast)
-	fmt.Println("vm", nbtLong.ValueMost)
-	fmt.Println("temp", temp)
-	i = i | (temp << 32)
-	fmt.Println("i", i)
+	i = int64(nbtLong.ValueLeast) | (int64(nbtLong.ValueMost) << 32)
 	return i
 }
 

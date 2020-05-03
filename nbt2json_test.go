@@ -34,12 +34,15 @@ const testJson = `{
           "name": "TestInt",
           "value": 2147483647
         },
-        {
-          "tagType": 4,
-          "name": "TestLong",
-          "value": 9223372036854775807
-        },
-        {
+				{
+					"tagType": 4,
+					"name": "",
+					"value": {
+						"valueLeast": 4294967295,
+						"valueMost": 2147483647
+					}
+				},
+				{
           "tagType": 5,
           "name": "TestFloat",
           "value": 1.234567e+38
@@ -159,8 +162,6 @@ func TestValueConversions(t *testing.T) {
 		{2, math.MinInt16, []byte{2, 0, 0, 0x00, 0x80}},
 		{3, math.MaxInt32, []byte{3, 0, 0, 0xff, 0xff, 0xff, 0x7f}},
 		{3, math.MinInt32, []byte{3, 0, 0, 0x00, 0x00, 0x00, 0x80}},
-		{4, math.MaxInt64, []byte{4, 0, 0, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x7f}},
-		{4, math.MinInt64, []byte{4, 0, 0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x80}},
 	}
 
 	for _, tag := range intTags {
@@ -289,17 +290,4 @@ func TestOutOfRange(t *testing.T) {
 			t.Error(fmt.Sprintf("Tag type %d value %g failed to throw out of range error", tag.tagType, tag.value))
 		}
 	}
-}
-
-func TestPrintThis(t *testing.T) {
-	var value string
-	value = fmt.Sprintf(testLongTemplate, 0, 0x80000000)
-	value = fmt.Sprintf(testLongTemplate, 0xffffffff, 0x7fffffff)
-	var json = fmt.Sprintf(testNumberRangeJsonTemplate, 4, "", value)
-	fmt.Println(json)
-	nbtData, err := Json2Nbt([]byte(json))
-	if err != nil {
-		t.Error("Error in json conversion during 'print this' test", err.Error())
-	}
-	fmt.Println(hex.Dump(nbtData))
 }

@@ -144,14 +144,7 @@ func writePayload(w io.Writer, m map[string]interface{}, tagType int64) error {
 	case 4:
 		if int64Map, ok := m["value"].(map[string]interface{}); ok {
 			var nbtLong NbtLong
-			// var ok bool
 			var vl, vm int64
-			// fmt.Println(int64Map["valueLeast"])
-			// fmt.Printf("%T\n", int64Map["valueLeast"])
-			// fmt.Println(int64Map["valueMost"])
-			// if foo, err := int64Map["valueLeast"].(json.Number).Int64(); err == nil {
-			// 	fmt.Println("Yay", foo)
-			// }
 			if vl, err = int64Map["valueLeast"].(json.Number).Int64(); err != nil {
 				return JsonParseError{fmt.Sprintf("Error reading valueLeast of '%v'", int64Map["valueLeast"]), nil}
 			}
