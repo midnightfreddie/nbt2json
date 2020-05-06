@@ -19,11 +19,9 @@ func main() {
 func mainAux() int {
 	var opt_e, opt_p string
 	var opt_i, opt_v bool
-	var opt_m int
 	flag.StringVar(&opt_e, "e", "", "")
 	// flag.StringVar(&opt_l, "l", "", "")
 	flag.StringVar(&opt_p, "p", "", "")
-	// flag.IntVar(&opt_m, "mx", 0, "")
 	flag.BoolVar(&opt_i, "i", false, "")
 	flag.BoolVar(&opt_v, "v", false, "")
 	// flag.BoolVar(&opt_dt, "dt", false, "")
@@ -52,11 +50,8 @@ Available options are:
 
 	status := 0
 
-	L := lua.NewState()
+	L := luanbt()
 	defer L.Close()
-	if opt_m > 0 {
-		L.SetMx(opt_m)
-	}
 
 	if opt_v || opt_i {
 		fmt.Println(lua.PackageCopyRight)
