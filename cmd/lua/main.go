@@ -17,25 +17,21 @@ func main() {
 }
 
 func mainAux() int {
-	var opt_e, opt_l, opt_p string
-	var opt_i, opt_v, opt_dt, opt_dc bool
+	var opt_e, opt_p string
+	var opt_i, opt_v bool
 	var opt_m int
 	flag.StringVar(&opt_e, "e", "", "")
-	flag.StringVar(&opt_l, "l", "", "")
+	// flag.StringVar(&opt_l, "l", "", "")
 	flag.StringVar(&opt_p, "p", "", "")
-	flag.IntVar(&opt_m, "mx", 0, "")
+	// flag.IntVar(&opt_m, "mx", 0, "")
 	flag.BoolVar(&opt_i, "i", false, "")
 	flag.BoolVar(&opt_v, "v", false, "")
-	flag.BoolVar(&opt_dt, "dt", false, "")
-	flag.BoolVar(&opt_dc, "dc", false, "")
+	// flag.BoolVar(&opt_dt, "dt", false, "")
+	// flag.BoolVar(&opt_dc, "dc", false, "")
 	flag.Usage = func() {
-		fmt.Println(`Usage: glua [options] [script [args]].
+		fmt.Println(`Usage: luanbt [options] [script [args]].
 Available options are:
   -e stat  execute string 'stat'
-  -l name  require library 'name'
-  -mx MB   memory limit(default: unlimited)
-  -dt      dump AST trees
-  -dc      dump VM codes
   -i       enter interactive mode after executing 'script'
   -p file  write cpu profiles to the file
   -v       show version information`)
@@ -66,11 +62,11 @@ Available options are:
 		fmt.Println(lua.PackageCopyRight)
 	}
 
-	if len(opt_l) > 0 {
-		if err := L.DoFile(opt_l); err != nil {
-			fmt.Println(err.Error())
-		}
-	}
+	// if len(opt_l) > 0 {
+	// 	if err := L.DoFile(opt_l); err != nil {
+	// 		fmt.Println(err.Error())
+	// 	}
+	// }
 
 	if nargs := flag.NArg(); nargs > 0 {
 		script := flag.Arg(0)
@@ -79,29 +75,29 @@ Available options are:
 			L.RawSet(argtb, lua.LNumber(i), lua.LString(flag.Arg(i)))
 		}
 		L.SetGlobal("arg", argtb)
-		if opt_dt || opt_dc {
-			file, err := os.Open(script)
-			if err != nil {
-				fmt.Println(err.Error())
-				return 1
-			}
-			chunk, err2 := parse.Parse(file, script)
-			if err2 != nil {
-				fmt.Println(err2.Error())
-				return 1
-			}
-			if opt_dt {
-				fmt.Println(parse.Dump(chunk))
-			}
-			if opt_dc {
-				proto, err3 := lua.Compile(chunk, script)
-				if err3 != nil {
-					fmt.Println(err3.Error())
-					return 1
-				}
-				fmt.Println(proto.String())
-			}
-		}
+		// if opt_dt || opt_dc {
+		// 	file, err := os.Open(script)
+		// 	if err != nil {
+		// 		fmt.Println(err.Error())
+		// 		return 1
+		// 	}
+		// 	chunk, err2 := parse.Parse(file, script)
+		// 	if err2 != nil {
+		// 		fmt.Println(err2.Error())
+		// 		return 1
+		// 	}
+		// 	if opt_dt {
+		// 		fmt.Println(parse.Dump(chunk))
+		// 	}
+		// 	if opt_dc {
+		// 		proto, err3 := lua.Compile(chunk, script)
+		// 		if err3 != nil {
+		// 			fmt.Println(err3.Error())
+		// 			return 1
+		// 		}
+		// 		fmt.Println(proto.String())
+		// 	}
+		// }
 		if err := L.DoFile(script); err != nil {
 			fmt.Println(err.Error())
 			status = 1
