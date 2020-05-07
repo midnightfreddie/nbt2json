@@ -96,6 +96,7 @@ func writeTag(w io.Writer, myMap interface{}) error {
 	return err
 }
 
+// TODO: I seem to only be looking for map["value"]interface{} so why not pass that instead of the whole map?
 func writePayload(w io.Writer, m map[string]interface{}, tagType float64) error {
 	var err error
 
