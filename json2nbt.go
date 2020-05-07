@@ -224,7 +224,7 @@ func writePayload(w io.Writer, m map[string]interface{}, tagType float64) error 
 				}
 			}
 		} else {
-			return JsonParseError{fmt.Sprintf("Tag 7 Byte Array element value field '%v' not an array", m["value"]), err}
+			return JsonParseError{fmt.Sprintf("Tag 7 Byte Array value field '%v' not an array", m["value"]), err}
 		}
 	case 8:
 		if s, ok := m["value"].(string); ok {
