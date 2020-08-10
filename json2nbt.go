@@ -316,7 +316,7 @@ func writePayload(w io.Writer, m map[string]interface{}, tagType float64) error 
 		}
 	case 12:
 		if values, ok := m["value"].([]interface{}); ok {
-			err = binary.Write(w, byteOrder, int64(len(values)))
+			err = binary.Write(w, byteOrder, int32(len(values)))
 			if err != nil {
 				return JsonParseError{"Error writing int64 array length", err}
 			}

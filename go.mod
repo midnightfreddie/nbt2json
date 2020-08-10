@@ -1,4 +1,4 @@
-module github.com/midnightfreddie/nbt2json
+module github.com/Lirsty/nbt2json
 
 go 1.13
 
