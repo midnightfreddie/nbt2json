@@ -56,8 +56,8 @@ func intPairToLong(nbtLong NbtLong) int64 {
 }
 
 // Nbt2Yaml converts uncompressed NBT byte array to YAML byte array
-func Nbt2Yaml(b []byte, comment string) ([]byte, error) {
-	jsonOut, err := Nbt2Json(b, comment)
+func Nbt2Yaml(r *bytes.Reader, comment string, tagCount int) ([]byte, error) {
+	jsonOut, err := Nbt2Json(r, comment, tagCount)
 	if err != nil {
 		return nil, err
 	}
@@ -69,17 +69,16 @@ func Nbt2Yaml(b []byte, comment string) ([]byte, error) {
 }
 
 // Nbt2Json converts uncompressed NBT byte array to JSON byte array
-func Nbt2Json(b []byte, comment string) ([]byte, error) {
+func Nbt2Json(r *bytes.Reader, comment string, tagCount int) ([]byte, error) {
 	var nbtJson NbtJson
 	nbtJson.Name = Name
 	nbtJson.Version = Version
 	nbtJson.Nbt2JsonUrl = Nbt2JsonUrl
 	nbtJson.ConversionTime = time.Now().Format(time.RFC3339)
 	nbtJson.Comment = comment
-	buf := bytes.NewReader(b)
 	// var nbtJson.nbt []*json.RawMessage
-	for buf.Len() > 0 {
-		element, err := getTag(buf)
+	for i := 0; i < tagCount; i++ {
+		element, err := getTag(r)
 		if err != nil {
 			return nil, err
 		}
