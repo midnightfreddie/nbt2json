@@ -56,8 +56,21 @@ func intPairToLong(nbtLong NbtLong) int64 {
 }
 
 // Nbt2Yaml converts uncompressed NBT byte array to YAML byte array
-func Nbt2Yaml(r *bytes.Reader, comment string, tagCount int) ([]byte, error) {
-	jsonOut, err := Nbt2Json(r, comment, tagCount)
+func Nbt2Yaml(b []byte, comment string) ([]byte, error) {
+	jsonOut, err := Nbt2Json(b, comment)
+	if err != nil {
+		return nil, err
+	}
+	yamlOut, err := yaml.JSONToYAML(jsonOut)
+	if err != nil {
+		return yamlOut, NbtParseError{"Error converting JSON to YAML. Oops. JSON conversion succeeded, so please report this error and use JSON instead.", err}
+	}
+	return yamlOut, nil
+}
+
+// ReadNbt2Yaml reads the given count of top level NBT tags from r and converts it to YAML byte array
+func ReadNbt2Yaml(r *bytes.Reader, comment string, tagCount int) ([]byte, error) {
+	jsonOut, err := ReadNbt2Json(r, comment, tagCount)
 	if err != nil {
 		return nil, err
 	}
@@ -69,7 +82,32 @@ func Nbt2Yaml(r *bytes.Reader, comment string, tagCount int) ([]byte, error) {
 }
 
 // Nbt2Json converts uncompressed NBT byte array to JSON byte array
-func Nbt2Json(r *bytes.Reader, comment string, tagCount int) ([]byte, error) {
+func Nbt2Json(b []byte, comment string) ([]byte, error) {
+	var nbtJson NbtJson
+	nbtJson.Name = Name
+	nbtJson.Version = Version
+	nbtJson.Nbt2JsonUrl = Nbt2JsonUrl
+	nbtJson.ConversionTime = time.Now().Format(time.RFC3339)
+	nbtJson.Comment = comment
+	buf := bytes.NewReader(b)
+	// var nbtJson.nbt []*json.RawMessage
+	for buf.Len() > 0 {
+		element, err := getTag(buf)
+		if err != nil {
+			return nil, err
+		}
+		myTemp := json.RawMessage(element)
+		nbtJson.Nbt = append(nbtJson.Nbt, &myTemp)
+	}
+	jsonOut, err := json.MarshalIndent(nbtJson, "", "  ")
+	if err != nil {
+		return nil, err
+	}
+	return jsonOut, nil
+}
+
+// ReadNbt2Json reads the given count of top level NBT tags from r and converts it to JSON byte array
+func ReadNbt2Json(r *bytes.Reader, comment string, tagCount int) ([]byte, error) {
 	var nbtJson NbtJson
 	nbtJson.Name = Name
 	nbtJson.Version = Version

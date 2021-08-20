@@ -144,7 +144,7 @@ func TestRoundTrip(t *testing.T) {
 	nbtHash := h.Sum(nbtData)
 
 	// Put that nbt through to json, get hash
-	jsonOut, err := Nbt2Json(bytes.NewReader(nbtData), "", 1)
+	jsonOut, err := Nbt2Json(nbtData, "")
 	if err != nil {
 		t.Fatal("Error in first Nbt2Json conversion:", err.Error())
 	}
@@ -163,7 +163,7 @@ func TestRoundTrip(t *testing.T) {
 	}
 
 	// Back to json again
-	jsonOut, err = Nbt2Json(bytes.NewReader(nbtData), "", 1)
+	jsonOut, err = Nbt2Json(nbtData, "")
 	if err != nil {
 		t.Fatal("Error in second Nbt2Json conversion:", err.Error())
 	}
@@ -187,7 +187,7 @@ func TestValueConversions(t *testing.T) {
 		} else if !bytes.Equal(nbtData, nbt) {
 			return fmt.Errorf(fmt.Sprintf("Tag type %d value %v, expected \n%s\n, got \n%s\n", tagType, value, hex.Dump(nbt), hex.Dump(nbtData)))
 		} else {
-			jsonData, err := Nbt2Json(bytes.NewReader(nbtData), "", 1)
+			jsonData, err := Nbt2Json(nbtData, "")
 			if err != nil {
 				return fmt.Errorf("Error in nbt re-conversion during value tests: %w", err)
 			} else {
