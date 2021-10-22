@@ -54,9 +54,9 @@ COPYRIGHT:
 
 This repo is both a Go module and a command line utility. To build the utility:
 
-- Ensure Go v1.16 or later is inatalled and configured (GOPATH is set)
+- Ensure Go v1.16 or later is installed and configured (GOPATH is set)
 - `cd` into repo root folder
-- `go build ./cmd/nbt2json` will put the executable in the current directory
+- `go build ./cmd/nbt2json` will put the executable in the current directory. **Important:** include the `./` at the beginning or else it will throw "package cmd/nbt2json is not in GOROOT". (I do that. Every. Time.)
 
 ## JSON format notes
 
